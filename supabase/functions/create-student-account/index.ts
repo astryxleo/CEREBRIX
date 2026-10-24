@@ -36,7 +36,7 @@ Deno.serve(async (request: Request) => {
   if (password.length < 12 || password.length > 128) return respond(400, { error: "Generated password does not meet security requirements." });
   const email = studentId.toLowerCase() + "@students.cerebrix.app";
   const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email, password, email_confirm: true, user_metadata: { display_name: displayName, student_id: studentId },
+    email, password, email_confirm: true, user_metadata: { display_name: displayName, student_id: studentId, force_password_change: true },
   });
   if (createError || !created.user) return respond(400, { error: createError?.message ?? "Student login could not be created." });
   const studentUserId = created.user.id;
