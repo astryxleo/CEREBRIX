@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import TestBuilder, { type BuilderTest } from "./TestBuilder";
+import TestDetails from "./TestDetails";
 import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, Gauge, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X } from "lucide-react";
 
 type Tab = "Overview" | "Tests" | "Submissions" | "Students" | "Analytics";
@@ -16,6 +17,7 @@ function App(){
  const [active,setActive]=useState<Tab>("Overview");
  const [role,setRole]=useState<"Teacher"|"Student">("Teacher");
  const [showCreate,setShowCreate]=useState(false);
+ const [selectedTest,setSelectedTest]=useState<BuilderTest|null>(null);
  const [createdTests,setCreatedTests]=useState<BuilderTest[]>(()=>{try{const saved=localStorage.getItem("cerebrix.teacher.tests.v1");return saved?JSON.parse(saved) as BuilderTest[]:[]}catch{return []}});
  const [mobileNav,setMobileNav]=useState(false);
  const [query,setQuery]=useState("");
@@ -53,7 +55,7 @@ function App(){
     <section className="content-grid">
      <div className="panel assessments-panel"><div className="panel-header"><div><div className="panel-kicker">ASSESSMENT OVERVIEW</div><h2>{active==="Submissions"?"Recent submissions":"Your assessments"}</h2><p>Keep every test on track, from draft to final grade.</p></div><button className="text-btn" onClick={()=>setActive("Tests")}>View all <ArrowRight size={15}/></button></div>
       <div className="table-tools"><div className="searchbox"><Search size={15}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search assessments..." /></div><button className="filter-btn" onClick={()=>setNotice("Showing all assessment statuses.")}><Filter size={15}/> Filter</button></div>
-      <div className="assessment-list">{filtered.map((t,i)=><div className="assessment-row" key={t.name}><div className={`assessment-symbol ${t.accent}`}>{i===0?<Terminal size={18}/>:i===1?<Code2 size={18}/>:<FileCode2 size={18}/>}</div><div className="assessment-info"><strong>{t.name}</strong><span>{t.subject}</span><div className="mobile-progress"><span>{t.students}</span><div className="progress-track"><i style={{width:t.progress+"%"}}/></div></div></div><div className="assessment-date"><span>{t.date}</span><span className={`badge ${t.status.toLowerCase()}`}><i/>{t.status}</span></div><div className="assessment-progress"><div><span>{t.students}</span><b>{t.progress? t.progress+"%": "—"}</b></div><div className="progress-track"><i style={{width:t.progress+"%"}}/></div></div><button className="row-more" onClick={()=>setNotice(t.name+" selected.")} aria-label={"Options for "+t.name}><MoreHorizontal size={18}/></button></div>)}
+      <div className="assessment-list">{filtered.map((t,i)=><div className="assessment-row" key={t.name}><div className={`assessment-symbol ${t.accent}`}>{i===0?<Terminal size={18}/>:i===1?<Code2 size={18}/>:<FileCode2 size={18}/>}</div><div className="assessment-info"><strong>{t.name}</strong><span>{t.subject}</span><div className="mobile-progress"><span>{t.students}</span><div className="progress-track"><i style={{width:t.progress+"%"}}/></div></div></div><div className="assessment-date"><span>{t.date}</span><span className={`badge ${t.status.toLowerCase()}`}><i/>{t.status}</span></div><div className="assessment-progress"><div><span>{t.students}</span><b>{t.progress? t.progress+"%": "—"}</b></div><div className="progress-track"><i style={{width:t.progress+"%"}}/></div></div><button className="row-more" onClick={()=>{const ownTest=createdTests.find(item=>item.name===t.name);if(ownTest){setSelectedTest(ownTest);}else{setNotice(t.name+" is sample dashboard data. Create your own test to manage its questions here.");}}} aria-label={"Open details for "+t.name}><MoreHorizontal size={18}/></button></div>)}
        {filtered.length===0&&<div className="empty-state">No assessments match “{query}”.</div>}
       </div>
       <div className="panel-footer"><span><span className="footer-dot"/> Updated just now</span><button onClick={()=>setActive("Tests")}>Manage assessments <ArrowRight size={14}/></button></div>
@@ -68,6 +70,7 @@ function App(){
     <footer className="footer"><span>© 2026 CEREBRIX <span className="footer-sep">·</span> THINK. CODE. PROVE.</span><span><span className="footer-dot"/> YOUR WORKSPACE, IN FOCUS</span></footer>
    </div>
   </main>
+  {selectedTest&&<TestDetails test={selectedTest} onClose={()=>setSelectedTest(null)} onDelete={test=>{setCreatedTests(current=>current.filter(item=>!(item.name===test.name&&item.scheduledAt===test.scheduledAt)));setSelectedTest(null);setNotice(`“${test.name}” was deleted from this browser.`);}}/>}
   {showCreate&&<TestBuilder onClose={()=>setShowCreate(false)} onSave={test=>{setCreatedTests(current=>[test,...current]);setNotice(test.status==="Scheduled"?`“${test.name}” scheduled in this session with ${test.totalMarks} marks and ${test.questionCount} questions.`:`“${test.name}” saved as a draft in this session.`);setActive("Tests");}}/>}
  </div>
 }
