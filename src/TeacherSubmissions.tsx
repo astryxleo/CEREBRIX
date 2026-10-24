@@ -1,18 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ClipboardList, Download, FileCode2, MessageSquareText, Save, Search } from "lucide-react";
 import type { BuilderTest } from "./TestBuilder";
+import { supabase } from "./lib/supabase";
 
-type Attempt = { testName: string; startedAt: number; answers: Record<string, string>; submittedAt?: number };
+type Attempt = { testName: string; assessmentId?: string; submissionId?: string; studentId?: string; startedAt: number; answers: Record<string, string>; submittedAt?: number };
 type Grade = { score: number; feedback: string; gradedAt: number };
-type Props = { tests: BuilderTest[] };
+type Props = { tests: BuilderTest[]; userId: string };
 const attemptsKey = "cerebrix.student.attempts.v1";
 const gradesKey = "cerebrix.teacher.grades.v1";
 function read<T,>(key: string, fallback: T): T {
   try { return JSON.parse(localStorage.getItem(key) || "null") as T || fallback; }
   catch { return fallback; }
 }
-export default function TeacherSubmissions({ tests }: Props) {
-  const [attempts] = useState<Record<string, Attempt>>(() => read(attemptsKey, {}));
+export default function TeacherSubmissions({ tests, userId }: Props) {
+  const [attempts, setAttempts] = useState<Record<string, Attempt>>(() => read(attemptsKey, {}));
   const [grades, setGrades] = useState<Record<string, Grade>>(() => read(gradesKey, {}));
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState("0");
@@ -20,7 +21,38 @@ export default function TeacherSubmissions({ tests }: Props) {
   const [notice, setNotice] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "graded" | "ungraded">("all");
-  const allRows = useMemo(() => Object.entries(attempts).filter(([, a]) => Boolean(a.submittedAt)).map(([name, a]) => ({ name, attempt: a, test: tests.find(t => t.name === a.testName), grade: grades[name] })).sort((a,b) => (b.attempt.submittedAt || 0) - (a.attempt.submittedAt || 0)), [attempts, tests, grades]);
+  useEffect(() => {
+    if (!supabase) return;
+    let alive = true;
+    const load = async () => {
+      const { data, error } = await supabase!.from("assessment_submissions")
+        .select("id,assessment_id,student_id,answers,started_at,submitted_at,status,assessments(title,assessment_grades(score,feedback,graded_at))")
+        .eq("status", "submitted").order("submitted_at", { ascending: false });
+      if (!alive) return;
+      if (error) { setNotice("Could not load shared submissions. Check that this account has Teacher access."); return; }
+      const remoteAttempts: Record<string, Attempt> = {};
+      const remoteGrades: Record<string, Grade> = {};
+      for (const row of data ?? []) {
+        const assessment = Array.isArray(row.assessments) ? row.assessments[0] : row.assessments;
+        const title = assessment?.title ?? tests.find(test => test.id === row.assessment_id)?.name ?? "Assessment";
+        remoteAttempts[row.id] = {
+          testName: title, assessmentId: row.assessment_id, submissionId: row.id, studentId: row.student_id,
+          startedAt: new Date(row.started_at).getTime(),
+          answers: row.answers && typeof row.answers === "object" ? row.answers as Record<string, string> : {},
+          submittedAt: row.submitted_at ? new Date(row.submitted_at).getTime() : undefined,
+        };
+        const gradeRaw = assessment?.assessment_grades;
+        const grade = Array.isArray(gradeRaw) ? gradeRaw[0] : gradeRaw;
+        if (grade) remoteGrades[row.id] = { score: Number(grade.score), feedback: grade.feedback ?? "", gradedAt: new Date(grade.graded_at).getTime() };
+      }
+      setAttempts(current => ({ ...current, ...remoteAttempts }));
+      setGrades(current => ({ ...current, ...remoteGrades }));
+    };
+    void load();
+    return () => { alive = false; };
+  }, [userId, tests]);
+
+  const allRows = useMemo(() => Object.entries(attempts).filter(([, a]) => Boolean(a.submittedAt)).map(([name, a]) => ({ name, attempt: a, test: tests.find(t => t.id === a.assessmentId) ?? tests.find(t => t.name === a.testName), grade: grades[name] })).sort((a,b) => (b.attempt.submittedAt || 0) - (a.attempt.submittedAt || 0)), [attempts, tests, grades]);
   const rows = useMemo(() => {
     const term = search.trim().toLocaleLowerCase();
     return allRows.filter(row => {
@@ -57,15 +89,25 @@ export default function TeacherSubmissions({ tests }: Props) {
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const startGrade = (name: string, current?: Grade) => { setSelected(name); setScore(String(current?.score ?? 0)); setFeedback(current?.feedback ?? ""); setNotice(""); };
-  const saveGrade = () => {
+  const saveGrade = async () => {
     if (!active) return;
     const max = active.test?.totalMarks ?? 100;
     const value = Number(score);
     if (!Number.isFinite(value) || value < 0 || value > max) { setNotice(`Enter a score from 0 to ${max}.`); return; }
-    const next = { ...grades, [active.name]: { score: value, feedback: feedback.trim(), gradedAt: Date.now() } };
+    const grade = { score: value, feedback: feedback.trim(), gradedAt: Date.now() };
+    if (active.attempt.submissionId && supabase) {
+      const { error } = await supabase.from("assessment_grades").upsert({
+        submission_id: active.attempt.submissionId, graded_by: userId, score: value,
+        feedback: feedback.trim(), graded_at: new Date(grade.gradedAt).toISOString(),
+      }, { onConflict: "submission_id" });
+      if (error) { setNotice("Grade could not be saved to the shared database. Confirm Teacher access and retry."); return; }
+      setNotice("Grade saved to the shared workspace.");
+    } else {
+      setNotice("Grade saved in this browser only.");
+    }
+    const next = { ...grades, [active.name]: grade };
     setGrades(next);
-    try { localStorage.setItem(gradesKey, JSON.stringify(next)); setNotice("Grade saved in this browser."); }
-    catch { setNotice("Browser storage is unavailable; this grade could not be saved."); }
+    try { localStorage.setItem(gradesKey, JSON.stringify(next)); } catch { /* Shared grade is already saved if applicable. */ }
   };
   return <section className="teacher-submissions">
     <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / REVIEW DESK</span><h2>Submission inbox<span className="heading-period">.</span></h2><p>Inspect submitted answers, leave feedback, and record marks.</p></div><div className="directory-header-actions"><div className="student-count"><ClipboardList size={18}/><strong>{allRows.length}</strong><span>submissions</span></div><button className="secondary-btn" onClick={exportSubmissions} disabled={!rows.length}><Download size={15}/> Export CSV</button></div></div>
