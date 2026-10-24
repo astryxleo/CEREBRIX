@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Activity, ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { Activity, ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
@@ -10,8 +10,6 @@ export default function AuthGate({ children }: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [checking, setChecking] = useState(true);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -67,19 +65,10 @@ export default function AuthGate({ children }: Props) {
     if (!supabase) return;
     setBusy(true); setError(""); setMessage("");
     try {
-      if (mode === "signup") {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: { data: { display_name: name.trim() } },
-        });
-        if (signUpError) throw signUpError;
-        if (!data.session) setMessage("Account created. Check your email to confirm it, then sign in.");
-        else setMessage("Account created. Your initial workspace role is Student.");
-      } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (signInError) throw signInError;
-      }
+      const loginValue = email.trim().toLowerCase();
+      const loginEmail = loginValue.includes("@") ? loginValue : `${loginValue}@students.cerebrix.app`;
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: loginEmail, password });
+      if (signInError) throw signInError;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Authentication failed. Please try again.");
     } finally { setBusy(false); }
@@ -97,15 +86,14 @@ export default function AuthGate({ children }: Props) {
   if (session && profile) return <>{children({ user: session.user, profile, signOut })}</>;
   if (session && !profile && !error) return <main className="auth-shell"><div className="auth-loading"><Activity size={22}/><span>Setting up your profile…</span></div></main>;
 
-  return <main className="auth-shell"><section className="auth-card"><div className="auth-logo">CB<span>X</span></div><span className="auth-kicker">CEREBRIX / SECURE ACCESS</span><h1>{mode === "signin" ? "Welcome back" : "Create your account"}<span>.</span></h1><p>{mode === "signin" ? "Sign in to continue to your assessment workspace." : "Create a student account to get started."}</p>
+  return <main className="auth-shell"><section className="auth-card"><div className="auth-logo">CB<span>X</span></div><span className="auth-kicker">CEREBRIX / SECURE ACCESS</span><h1>Welcome back<span>.</span></h1><p>Sign in to continue to your assessment workspace. Student accounts are issued by your teacher.</p>
     <form onSubmit={submit} className="auth-form">
       {mode === "signup" && <label><span>Display name</span><div className="auth-input"><UserRound size={16}/><input value={name} onChange={e=>setName(e.target.value)} autoComplete="name" placeholder="Your name" maxLength={100} required/></div></label>}
-      <label><span>Email address</span><div className="auth-input"><Mail size={16}/><input type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" placeholder="you@example.com" required/></div></label>
-      <label><span>Password</span><div className="auth-input"><LockKeyhole size={16}/><input type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} autoComplete={mode==="signin"?"current-password":"new-password"} minLength={8} placeholder="At least 8 characters" required/><button type="button" className="auth-eye" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Hide password":"Show password"}>{showPassword?<EyeOff size={16}/>:<Eye size={16}/>}</button></div></label>
+      <label><span>Email or Student ID</span><div className="auth-input"><Mail size={16}/><input value={email} onChange={e=>setEmail(e.target.value)} autoComplete="username" placeholder="Enter email or teacher-issued ID" required/></div></label>
+      <label><span>Password</span><div className="auth-input"><LockKeyhole size={16}/><input type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" placeholder="Your password" required/><button type="button" className="auth-eye" onClick={()=>setShowPassword(v=>!v)} aria-label={showPassword?"Hide password":"Show password"}>{showPassword?<EyeOff size={16}/>:<Eye size={16}/>}</button></div></label>
       {error&&<div className="auth-error" role="alert">{error}</div>}{message&&<div className="auth-message" role="status">{message}</div>}
-      <button className="auth-submit" type="submit" disabled={busy}>{busy?"Please wait…":mode==="signin"?"Sign in securely":"Create student account"}<ArrowRight size={16}/></button>
+      <button className="auth-submit" type="submit" disabled={busy}>{busy?"Please wait…":"Sign in securely"}<ArrowRight size={16}/></button>
     </form>
-    <div className="auth-switch">{mode==="signin"?"New to CEREBRIX?":"Already have an account?"}<button onClick={()=>{setMode(v=>v==="signin"?"signup":"signin");setError("");setMessage("");}}>{mode==="signin"?"Create account":"Sign in"}</button></div>
-    <div className="auth-foot"><ShieldCheck size={14}/> Teacher access is assigned by the workspace operator.</div>
+    <div className="auth-foot"><ShieldCheck size={14}/> Student IDs and passwords are created by your teacher. Contact your teacher if you need access.</div>
   </section></main>;
 }
