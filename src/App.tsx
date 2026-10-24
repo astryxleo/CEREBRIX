@@ -10,7 +10,7 @@ const tests = [
   {name:"SQL Query Challenge",subject:"MySQL · Joins & aggregation",status:"Scheduled",date:"Tomorrow, 9:00 AM",students:"32 enrolled",progress:0,accent:"cyan"},
   {name:"File Handling Practical",subject:"CSV · TXT · Binary files",status:"Grading",date:"Oct 22, 10:00 AM",students:"30 / 30",progress:74,accent:"white"}
 ];
-function Brand(){return <div className="brand"><div className="brand-mark"><BrainCircuit size={22}/></div><div><strong>CEREBRIX</strong><span>THINK. CODE. PROVE.</span></div></div>}
+function Brand(){return <div className="brand"><div className="brand-mark"><img src="/cerebrix.png" alt="" /></div><div><strong>CEREBRIX</strong><span>THINK. CODE. PROVE.</span></div></div>}
 function App(){
  const [active,setActive]=useState<Tab>("Overview");
  const [role,setRole]=useState<"Teacher"|"Student">("Teacher");
