@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { CalendarDays, Check, ChevronDown, Clock3, FileCode2, Plus, Save, Trash2, X } from "lucide-react";
 
 export type BuilderTest = {
+  id?: string;
   name: string;
   subject: string;
   status: string;
