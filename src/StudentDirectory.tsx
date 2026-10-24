@@ -32,7 +32,8 @@ export default function StudentDirectory() {
   const exportCsv = () => {
     const escapeCell = (value: string) => {
       // Prevent spreadsheet formula execution from user-controlled roster fields.
-      const safe = /^[\\t\\r\\n ]*[=+\\-@]/.test(value) ? "'" + value : value;
+      const first = value.trimStart().charAt(0);
+      const safe = ["=", "+", "-", "@"].includes(first) ? "'" + value : value;
       return '"' + safe.replace(/"/g, '""') + '"';
     };
     const rows = [["Name", "Email", "Class / section", "Added at"], ...students.map(student => [student.name, student.email, student.className, new Date(student.addedAt).toISOString()])];
