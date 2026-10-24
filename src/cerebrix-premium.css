@@ -108,3 +108,22 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .fortress-terminated-status { display:flex; align-items:center; gap:9px; margin:22px 0; color:#34d399; font:11px "JetBrains Mono",monospace; text-transform:uppercase; letter-spacing:.06em; }
 .student-state.terminated { max-width:180px; white-space:normal; text-align:center; color:#ff7184; border:1px solid rgba(255,51,79,.28); background:rgba(255,51,79,.08); }
 @media(max-width:640px) { .fortress-terminated-card { padding:24px; } }
+
+/* Fortress security and termination states */
+.fortress-blackout { position:fixed!important; inset:0!important; z-index:9999!important; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:28px; background:#000!important; color:#f5faff; text-align:center; }
+.fortress-blackout h2 { margin:4px 0; color:#ff334f!important; font:800 clamp(24px,4vw,40px)/1.1 Inter,sans-serif; letter-spacing:.08em; text-shadow:0 0 24px rgba(255,35,70,.55); }
+.fortress-blackout p { max-width:520px; color:#dce6f2; }
+.fortress-blackout .fortress-sigil { display:grid; place-items:center; width:68px; height:68px; border:1px solid rgba(255,51,79,.5); border-radius:20px; color:#ff334f; background:rgba(255,51,79,.08); box-shadow:0 0 32px rgba(255,35,70,.2); }
+.fortress-blackout .panel-kicker { color:#ff6678; }
+.fortress-blackout .fortress-warning-count { color:#dce6f2; font:11px "JetBrains Mono",monospace; letter-spacing:.12em; }
+.fortress-blackout .fortress-warning-count strong { margin-left:8px; color:#ff334f; font-size:20px; text-shadow:0 0 16px rgba(255,35,70,.45); }
+.fortress-blackout small { max-width:580px; color:rgba(220,230,242,.55); line-height:1.6; }
+.fortress-terminated { display:grid; min-height:100vh; place-items:center; padding:24px; background:radial-gradient(ellipse at 50% 35%,rgba(255,35,70,.12),transparent 42%),#000; color:#f5faff; }
+.fortress-terminated-card { width:min(100%,560px); padding:clamp(24px,5vw,44px); border:1px solid rgba(255,51,79,.26); border-radius:22px; background:linear-gradient(145deg,rgba(17,19,27,.96),rgba(3,4,8,.98)); box-shadow:0 0 50px rgba(255,35,70,.1),0 28px 90px rgba(0,0,0,.5); }
+.fortress-terminated-icon { display:grid; place-items:center; width:60px; height:60px; margin-bottom:22px; border:1px solid rgba(255,51,79,.35); border-radius:17px; color:#ff334f; background:rgba(255,51,79,.08); box-shadow:0 0 24px rgba(255,35,70,.12); }
+.fortress-terminated-card h1 { margin:14px 0; font-size:clamp(26px,5vw,38px); font-weight:800; letter-spacing:-.04em; }
+.fortress-terminated-card h1 span { color:#ff334f; }
+.fortress-terminated-card p { color:rgba(220,230,242,.72); line-height:1.75; font-size:13px; }
+.fortress-terminated-status { display:flex; align-items:center; gap:9px; margin:22px 0; color:#34d399; font:11px "JetBrains Mono",monospace; text-transform:uppercase; letter-spacing:.06em; }
+.student-state.terminated { max-width:180px; white-space:normal; text-align:center; color:#ff7184; border:1px solid rgba(255,51,79,.28); background:rgba(255,51,79,.08); }
+@media(max-width:640px) { .fortress-terminated-card { padding:24px; } }
