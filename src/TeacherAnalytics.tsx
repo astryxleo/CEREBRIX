@@ -86,7 +86,7 @@ export default function TeacherAnalytics({ tests, userId }: Props) {
   return <section className="analytics-workspace">
     <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / PERFORMANCE INTELLIGENCE</span><h2>Class analytics<span className="heading-period">.</span></h2><p>A quick read on submitted work, grading progress, and assessment outcomes.</p></div><div className="student-count"><Activity size={18}/><strong>{graded.length}</strong><span>graded attempts</span></div></div>
     {notice && <div className="notice"><Activity size={16}/><span>{notice}</span></div>}
-    <div className="student-preview-banner"><Activity size={18}/><div><strong>{supabase ? "Shared analytics" : "Local analytics preview"}</strong><p>{supabase ? "Metrics use submissions and grades from your authenticated workspace." : "Metrics are calculated from this browser’s saved assessments, submissions, and grades."}</p></div></div>
+    <div className="student-preview-banner"><Activity size={18}/><div><strong>{supabase ? "Shared analytics" : "Local analytics preview"}</strong><p>{supabase ? (remoteLoaded ? "Metrics use submissions and grades from your authenticated workspace." : "Loading shared submissions and grades…") : "Metrics are calculated from this browser’s saved assessments, submissions, and grades."}</p></div></div>
     <div className="analytics-metrics">
       <article className="analytics-metric"><span><FileCode2 size={17}/> Assessments</span><strong>{tests.length}</strong><small>Saved in this browser</small></article>
       <article className="analytics-metric"><span><Users size={17}/> Submitted</span><strong>{submitted.length}</strong><small>Completed attempts</small></article>
