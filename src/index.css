@@ -324,7 +324,7 @@ html.cerebrix-force-cursor body,
 html.cerebrix-force-cursor body *,
 html.cerebrix-force-cursor body *::before,
 html.cerebrix-force-cursor body *::after {
-  cursor: url("https://images.weserv.nl/?url=raw.githubusercontent.com%2Fastryxleo%2FCEREBRIX%2Fmain%2Fcursor%2520%252820%2529.png&w=23&h=23&fit=contain&output=png") 0 0, auto !important;
+  cursor: url("https://images.weserv.nl/?url=raw.githubusercontent.com%2Fastryxleo%2FCEREBRIX%2Fmain%2Fcursor%2520%252820%2529.png&w=23&h=23&fit=contain&output=png") 5 0, auto !important;
 }
 /* Do not draw the old simulated overlay on top of the actual PNG cursor. */
 html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
