@@ -68,13 +68,13 @@ export function useFortressSecurity({
     };
     const keydown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (e.key === "PrintScreen" || (e.metaKey && e.shiftKey && ["3", "4", "5", "6"].includes(key))) {
+      if (e.key === "PrintScreen" || (e.metaKey && e.shiftKey && ["3", "4", "5", "6"].includes(key)) || (e.shiftKey && key === "s" && (e.getModifierState("OS") || e.getModifierState("Meta")))) {
         e.preventDefault(); strike("print-screen"); return;
       }
       if (e.key === "F12" || (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(key)) || (e.ctrlKey && key === "u")) {
         e.preventDefault(); strike("devtools-shortcut"); return;
       }
-      if (restrictClipboard && (e.ctrlKey || e.metaKey) && ["c", "x", "v"].includes(key)) {
+      if (restrictClipboard && (e.ctrlKey || e.metaKey) && ["c", "x", "v"].includes(key) || (e.shiftKey && key === "insert") || (e.ctrlKey && key === "insert")) {
         e.preventDefault(); strike("clipboard");
       }
     };
