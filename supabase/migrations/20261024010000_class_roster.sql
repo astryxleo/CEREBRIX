@@ -8,7 +8,8 @@ create table if not exists public.class_roster (
   added_at timestamptz not null default now()
 );
 create unique index if not exists class_roster_teacher_email_unique
-  on public.class_roster (teacher_id, lower(email));
+  on public.class_roster (teacher_id, lower(email))
+  where trim(email) <> '';
 create index if not exists class_roster_teacher_added_idx
   on public.class_roster (teacher_id, added_at desc);
 alter table public.class_roster enable row level security;
