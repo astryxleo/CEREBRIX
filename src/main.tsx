@@ -8,8 +8,10 @@ import "./cerebrix-premium.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <AuthGate>
-      {({ user, profile, signOut }) => <App user={user} profile={profile} signOut={signOut} />}
-    </AuthGate>
+    <BrowserRouter>
+      <AuthGate>
+        {({ user, profile, signOut }) => <App user={user} profile={profile} signOut={signOut} />}
+      </AuthGate>
+    </BrowserRouter>
   </React.StrictMode>
 );
