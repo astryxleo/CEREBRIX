@@ -74,7 +74,7 @@ export function useFortressSecurity({
       if (e.key === "F12" || (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(key)) || (e.ctrlKey && key === "u")) {
         e.preventDefault(); strike("devtools-shortcut"); return;
       }
-      if (restrictClipboard && (e.ctrlKey || e.metaKey) && ["c", "x", "v"].includes(key) || (e.shiftKey && key === "insert") || (e.ctrlKey && key === "insert")) {
+      if (restrictClipboard && (((e.ctrlKey || e.metaKey) && ["c", "x", "v"].includes(key)) || (e.shiftKey && key === "insert") || (e.ctrlKey && key === "insert"))) {
         e.preventDefault(); strike("clipboard");
       }
     };
