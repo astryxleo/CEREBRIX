@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { GraduationCap, Mail, Plus, Search, Trash2, Users, X } from "lucide-react";
+import { Download, GraduationCap, Mail, Plus, Search, Trash2, Users, X } from "lucide-react";
 
 type Student = { id: string; name: string; email: string; className: string; addedAt: number };
 const storageKey = "cerebrix.teacher.students.v1";
@@ -17,6 +17,15 @@ export default function StudentDirectory() {
   const [error, setError] = useState("");
   useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(students)); } catch { /* Browser storage can be unavailable. */ } }, [students]);
   const filtered = useMemo(() => students.filter(student => (student.name + " " + student.email + " " + student.className).toLowerCase().includes(query.trim().toLowerCase())).sort((a,b) => a.name.localeCompare(b.name)), [students, query]);
+  const exportCsv = () => {
+    const escapeCell = (value: string) => '"' + value.replace(/"/g, '""') + '"';
+    const rows = [["Name", "Email", "Class / section", "Added at"], ...students.map(student => [student.name, student.email, student.className, new Date(student.addedAt).toISOString()])];
+    const csv = rows.map(row => row.map(escapeCell).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" }));
+    const link = document.createElement("a");
+    link.href = url; link.download = "cerebrix-students.csv"; link.click();
+    URL.revokeObjectURL(url);
+  };
   const addStudent = () => {
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
@@ -27,7 +36,7 @@ export default function StudentDirectory() {
     setName(""); setEmail(""); setClassName("Class 12"); setError(""); setShowForm(false);
   };
   return <section className="student-directory">
-    <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / CLASS ROSTER</span><h2>Student directory<span className="heading-period">.</span></h2><p>Maintain a simple roster for your classroom workspace.</p></div><button className="primary-btn" onClick={() => { setShowForm(value => !value); setError(""); }}><Plus size={15}/>{showForm ? "Close form" : "Add student"}</button></div>
+    <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / CLASS ROSTER</span><h2>Student directory<span className="heading-period">.</span></h2><p>Maintain a simple roster for your classroom workspace.</p></div><div className="directory-header-actions"><button className="secondary-btn" onClick={exportCsv} disabled={!students.length}><Download size={15}/> Export CSV</button><button className="primary-btn" onClick={() => { setShowForm(value => !value); setError(""); }}><Plus size={15}/>{showForm ? "Close form" : "Add student"}</button></div></div>
     <div className="student-preview-banner"><Users size={18}/><div><strong>Local roster preview</strong><p>Student profiles are saved only in this browser. They are not invitations, authenticated accounts, or connected to exam submissions yet.</p></div></div>
     <div className="directory-stats"><article><Users size={17}/><span>Total students</span><strong>{students.length}</strong></article><article><GraduationCap size={17}/><span>Classes represented</span><strong>{new Set(students.map(student => student.className.trim()).filter(Boolean)).size}</strong></article><article><Mail size={17}/><span>Emails added</span><strong>{students.filter(student => student.email).length}</strong></article></div>
     {showForm && <div className="panel directory-form"><div className="panel-header"><div><div className="panel-kicker">NEW STUDENT</div><h2>Add to roster</h2></div><button className="icon-btn" onClick={() => setShowForm(false)} aria-label="Close form"><X size={17}/></button></div>{error && <div className="builder-error">{error}</div>}<div className="directory-fields"><label className="builder-field">Full name<input autoFocus value={name} onChange={event => setName(event.target.value)} placeholder="Student name" /></label><label className="builder-field">Email (optional)<input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="student@school.edu" /></label><label className="builder-field">Class / section<input value={className} onChange={event => setClassName(event.target.value)} placeholder="e.g. Class 12 · A" /></label></div><div className="directory-form-actions"><button className="secondary-btn" onClick={() => setShowForm(false)}>Cancel</button><button className="primary-btn" onClick={addStudent}><Plus size={15}/> Save student</button></div></div>}
