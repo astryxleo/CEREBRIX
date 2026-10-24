@@ -46,3 +46,8 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .grade-actions .primary-btn, .grade-actions .secondary-btn { display:inline-flex; align-items:center; gap:8px; }
 .teacher-code-view .exam-monaco-toolbar { min-height:36px; }
 @media(max-width:680px) { .grading-score-strip { grid-template-columns:1fr; } .grading-mini-chart { height:90px; } .grade-actions>* { flex:1 1 100%; justify-content:center; } }
+
+.integrity-review-note { display:flex; align-items:flex-start; gap:12px; margin:16px 0; padding:14px 16px; border:1px solid rgba(0,207,255,.2); border-radius:12px; background:linear-gradient(110deg,rgba(0,102,255,.1),rgba(0,0,0,.16)); color:#00cfff; }
+.integrity-review-note>div { min-width:0; }
+.integrity-review-note strong { color:#f5faff; font-size:12px; }
+.integrity-review-note p { margin:5px 0 0; color:rgba(220,230,242,.58); font-size:11px; line-height:1.6; }
