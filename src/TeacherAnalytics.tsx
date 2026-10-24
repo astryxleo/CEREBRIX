@@ -5,13 +5,41 @@ import type { BuilderTest } from "./TestBuilder";
 type Attempt = { testName: string; startedAt: number; answers: Record<string, string>; submittedAt?: number };
 type Grade = { score: number; feedback: string; gradedAt: number };
 type Props = { tests: BuilderTest[] };
-const read = <T,>(key: string, fallback: T): T => {
-  try { return (JSON.parse(localStorage.getItem(key) || "null") as T) || fallback; }
-  catch { return fallback; }
-};
+function readAttempts(): Record<string, Attempt> {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem("cerebrix.student.attempts.v1") || "{}");
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter(([, item]) => {
+      if (!item || typeof item !== "object") return false;
+      const attempt = item as Partial<Attempt>;
+      return typeof attempt.testName === "string"
+        && typeof attempt.startedAt === "number"
+        && Number.isFinite(attempt.startedAt)
+        && !!attempt.answers
+        && typeof attempt.answers === "object"
+        && !Array.isArray(attempt.answers)
+        && (attempt.submittedAt === undefined || (typeof attempt.submittedAt === "number" && Number.isFinite(attempt.submittedAt)));
+    })) as Record<string, Attempt>;
+  } catch { return {}; }
+}
+function readGrades(): Record<string, Grade> {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem("cerebrix.teacher.grades.v1") || "{}");
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter(([, item]) => {
+      if (!item || typeof item !== "object") return false;
+      const grade = item as Partial<Grade>;
+      return typeof grade.score === "number"
+        && Number.isFinite(grade.score)
+        && typeof grade.feedback === "string"
+        && typeof grade.gradedAt === "number"
+        && Number.isFinite(grade.gradedAt);
+    })) as Record<string, Grade>;
+  } catch { return {}; }
+}
 export default function TeacherAnalytics({ tests }: Props) {
-  const attempts = useMemo(() => read<Record<string, Attempt>>("cerebrix.student.attempts.v1", {}), []);
-  const grades = useMemo(() => read<Record<string, Grade>>("cerebrix.teacher.grades.v1", {}), []);
+  const attempts = useMemo(() => readAttempts(), []);
+  const grades = useMemo(() => readGrades(), []);
   const submitted = Object.entries(attempts).filter(([, attempt]) => Boolean(attempt.submittedAt));
   const graded = submitted.filter(([key]) => grades[key]);
   const average = graded.length ? Math.round(graded.reduce((sum, [key]) => sum + (maxPossible(key) ? grades[key].score / maxPossible(key) * 100 : 0), 0) / graded.length) : null;
