@@ -69,6 +69,7 @@ export default function TeacherGradingStudio({ tests, userId }: Props) {
     const channel = supabase!.channel(`teacher-submissions-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "assessment_submissions" }, () => { void load(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "assessment_grades" }, () => { void load(); })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "assessment_integrity_events" }, () => { void load(); })
       .subscribe();
     return () => { alive = false; void supabase!.removeChannel(channel); };
   }, [userId, tests]);
