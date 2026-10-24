@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import Editor from "@monaco-editor/react";
+import { useAntiCheating } from "./useAntiCheating";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, FileCode2, Send, ShieldCheck } from "lucide-react";
 import type { BuilderTest } from "./TestBuilder";
 import { supabase } from "./lib/supabase";
@@ -24,6 +27,21 @@ export default function StudentExam({ tests, userId }: Props) {
   const activeKey = activeTest ? (activeTest.id ?? activeTest.name) : null;
   const attempt = activeKey ? attempts[activeKey] : undefined;
   const currentQuestion = activeTest?.questions[questionIndex];
+  const fortress = useAntiCheating({
+    enabled: Boolean(activeTest && attempt && !attempt.submittedAt),
+    blackoutOnBlur: true,
+    restrictClipboard: false,
+    onWarning: reason => {
+      const messages: Record<string, string> = {
+        "tab-hidden": "Focus warning recorded: the exam tab became hidden. Return to the assessment and continue.",
+        "print-screen": "Best-effort screen-capture shortcut warning recorded. Browser controls cannot guarantee screenshot prevention.",
+        "devtools-shortcut": "Developer-tools shortcut warning recorded.",
+        "context-menu": "Right-click was disabled during the active assessment.",
+        "clipboard": "Clipboard interaction was blocked.",
+      };
+      setNotice(messages[reason] ?? "Exam integrity warning recorded.");
+    },
+  });
   const remainingSeconds = activeTest && attempt && !attempt.submittedAt
     ? Math.max(0, activeTest.duration * 60 - Math.floor((now - attempt.startedAt) / 1000)) : 0;
 
@@ -94,6 +112,9 @@ export default function StudentExam({ tests, userId }: Props) {
     }
     setQuestionIndex(0);
     setActiveName(test.name);
+    if (document.fullscreenEnabled && !document.fullscreenElement) {
+      try { await document.documentElement.requestFullscreen(); } catch { /* Fullscreen requires browser permission/user gesture. */ }
+    }
   };
   const updateAnswer = (value: string) => {
     if (!activeTest || !attempt || attempt.submittedAt || remainingSeconds <= 0 || !currentQuestion) return;
@@ -121,12 +142,14 @@ export default function StudentExam({ tests, userId }: Props) {
     const submitted = Boolean(attempt.submittedAt);
     const expired = !submitted && remainingSeconds <= 0;
     return <section className="student-workspace">
+      <AnimatePresence>{fortress.isBlackout && <motion.div className="fortress-blackout" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} role="alert" aria-live="assertive"><div className="fortress-sigil"><ShieldCheck size={34}/></div><span className="panel-kicker">CEREBRIX / EXAM INTEGRITY</span><h2>FOCUS INTERRUPTED</h2><p>Your exam session lost focus or a capture shortcut was detected.</p><div className="fortress-warning-count">WARNINGS <strong>{fortress.warnings.toString().padStart(2,"0")}</strong></div><button className="primary-btn" onClick={() => { void fortress.enterFullscreen(); }}>Return to exam <ArrowRight size={15}/></button><small>Browser-based capture detection is best-effort and cannot block operating-system screenshots.</small></motion.div>}</AnimatePresence>
       <button className="student-back" onClick={() => { setActiveName(null); setConfirmSubmit(false); }}><ArrowLeft size={15}/> All assessments</button>
       <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / STUDENT EXAM</span><h2>{activeTest.name}</h2><p>{activeTest.subject} · {activeTest.totalMarks} marks · {activeTest.questions.length} questions</p></div><div className={remainingSeconds < 300 && !submitted ? "exam-timer urgent" : "exam-timer"}><Clock3 size={17}/><div><small>{submitted ? "STATUS" : "TIME REMAINING"}</small><strong>{submitted ? "Submitted" : formatTime(remainingSeconds)}</strong></div></div></div>
+      {notice && <div className="notice"><ShieldCheck size={16}/><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Dismiss warning">×</button></div>}
       {submitted ? <div className="exam-complete"><CheckCircle2 size={34}/><h3>Submission recorded</h3><p>{attempt.submissionId ? "Your answers have been submitted to your teacher and saved to the shared workspace." : "Your answers are saved locally in this preview and have not been sent to a teacher."}</p><button className="primary-btn" onClick={() => setActiveName(null)}>Back to assessments <ArrowRight size={15}/></button></div> : <>
         <div className="exam-integrity-note"><ShieldCheck size={16}/><span><strong>Work carefully, save as you go.</strong> {attempt.submissionId ? "Answers sync to the shared workspace as you work. The server records your submission." : "Answers autosave to this browser. This preview does not provide server-enforced timing or online submission."}</span></div>
         <div className="exam-layout"><aside className="exam-question-nav"><span className="panel-kicker">QUESTIONS</span><div>{activeTest.questions.map((q, i) => <button key={q.id} className={questionIndex === i ? "current" : ""} onClick={() => setQuestionIndex(i)}><span>{String(i + 1).padStart(2, "0")}</span><i className={attempt.answers[String(q.id)]?.trim() ? "answered" : ""}/></button>)}</div><p>{activeTest.questions.filter(q => attempt.answers[String(q.id)]?.trim()).length} of {activeTest.questions.length} answered</p></aside>
-          <article className="exam-question-panel"><div className="exam-question-meta"><span>QUESTION {String(questionIndex + 1).padStart(2, "0")} / {String(activeTest.questions.length).padStart(2, "0")}</span><b>{currentQuestion?.marks} marks</b></div><h3>{currentQuestion?.title.trim() || `Question ${questionIndex + 1}`}</h3><p className="exam-prompt">{currentQuestion?.prompt}</p>{currentQuestion?.dataset.trim() && <div className="exam-dataset"><span>STARTER DATA / REFERENCE</span><pre>{currentQuestion.dataset}</pre></div>}<label className="exam-answer-label">YOUR ANSWER <span>{currentQuestion?.kind}</span><textarea value={currentQuestion ? attempt.answers[String(currentQuestion.id)] || "" : ""} onChange={e => updateAnswer(e.target.value)} placeholder={currentQuestion?.kind === "Theory" ? "Write your answer here…" : "Write your code, SQL query, or explanation here…"} rows={11} spellCheck={false}/></label><div className="exam-question-actions"><button className="secondary-btn" disabled={questionIndex === 0} onClick={() => setQuestionIndex(i => Math.max(0, i - 1))}><ArrowLeft size={14}/> Previous</button>{questionIndex < activeTest.questions.length - 1 ? <button className="primary-btn" onClick={() => setQuestionIndex(i => Math.min(activeTest.questions.length - 1, i + 1))}>Next question <ArrowRight size={14}/></button> : <button className="primary-btn" onClick={() => setConfirmSubmit(true)}><Send size={14}/> Review & submit</button>}</div></article>
+          <article className="exam-question-panel"><div className="exam-question-meta"><span>QUESTION {String(questionIndex + 1).padStart(2, "0")} / {String(activeTest.questions.length).padStart(2, "0")}</span><b>{currentQuestion?.marks} marks</b></div><h3>{currentQuestion?.title.trim() || `Question ${questionIndex + 1}`}</h3><p className="exam-prompt">{currentQuestion?.prompt}</p>{currentQuestion?.dataset.trim() && <div className="exam-dataset"><span>STARTER DATA / REFERENCE</span><pre>{currentQuestion.dataset}</pre></div>}<label className="exam-answer-label">YOUR ANSWER <span>{currentQuestion?.kind === "Theory" ? "TEXT RESPONSE" : "SCRIPT MODE · NO EXECUTION"}</span>{currentQuestion?.kind === "Theory" ? <textarea value={currentQuestion ? attempt.answers[String(currentQuestion.id)] || "" : ""} onChange={e => updateAnswer(e.target.value)} placeholder="Write your answer here…" rows={11} spellCheck={false}/> : <div className="exam-monaco-shell"><div className="exam-monaco-toolbar"><span><i/> solution.{currentQuestion?.kind === "MySQL" ? "sql" : currentQuestion?.kind === "Python" ? "py" : "txt"}</span><span>EDIT ONLY · EXECUTION DISABLED</span></div><Editor height="360px" language={currentQuestion?.kind === "Python" ? "python" : currentQuestion?.kind === "MySQL" ? "sql" : "plaintext"} theme="vs-dark" value={currentQuestion ? attempt.answers[String(currentQuestion.id)] || "" : ""} onChange={value => updateAnswer(value ?? "")} options={{fontFamily:"JetBrains Mono, monospace",fontSize:14,lineNumbers:"on",minimap:{enabled:false},scrollBeyondLastLine:false,smoothScrolling:true,cursorBlinking:"smooth",automaticLayout:true,wordWrap:"on",readOnly:submitted || remainingSeconds <= 0,contextmenu:false,quickSuggestions:false,suggestOnTriggerCharacters:false,parameterHints:{enabled:false},lightbulb:{enabled:"off"},renderLineHighlight:"all",padding:{top:16,bottom:16}}}/></div>}</label><div className="exam-question-actions"><button className="secondary-btn" disabled={questionIndex === 0} onClick={() => setQuestionIndex(i => Math.max(0, i - 1))}><ArrowLeft size={14}/> Previous</button>{questionIndex < activeTest.questions.length - 1 ? <button className="primary-btn" onClick={() => setQuestionIndex(i => Math.min(activeTest.questions.length - 1, i + 1))}>Next question <ArrowRight size={14}/></button> : <button className="primary-btn" onClick={() => setConfirmSubmit(true)}><Send size={14}/> Review & submit</button>}</div></article>
         </div>
         {confirmSubmit && <div className="exam-confirm"><div><strong>Submit this attempt?</strong><p>{activeTest.questions.filter(q => attempt.answers[String(q.id)]?.trim()).length} of {activeTest.questions.length} questions have answers. You can’t edit after submitting.</p></div><button className="secondary-btn" onClick={() => setConfirmSubmit(false)}>Keep working</button><button className="primary-btn" onClick={submit}>Submit attempt <Send size={14}/></button></div>}
         {expired && <div className="exam-expired"><Clock3 size={15}/> Time limit reached. Editing is paused in this preview; use Review & submit to record the attempt locally.</div>}
