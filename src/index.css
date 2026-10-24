@@ -183,3 +183,8 @@
 .directory-header-actions .secondary-btn,.directory-header-actions .primary-btn{white-space:nowrap}
 .directory-header-actions button:disabled{opacity:.42;cursor:not-allowed}
 @media(max-width:600px){.student-directory>.student-exam-header{align-items:flex-start;flex-direction:column}.directory-header-actions{width:100%}.directory-header-actions button{flex:1;justify-content:center}}
+
+.teacher-submissions>.student-exam-header .directory-header-actions{align-items:center;flex-wrap:wrap}
+.teacher-submissions>.student-exam-header .student-count{min-width:115px}
+.teacher-submissions>.student-exam-header .secondary-btn{white-space:nowrap}
+@media(max-width:600px){.teacher-submissions>.student-exam-header .directory-header-actions{justify-content:flex-start}.teacher-submissions>.student-exam-header .student-count{flex:1}}
