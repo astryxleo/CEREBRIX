@@ -32,6 +32,17 @@ export default function StudentExam({ tests, userId }: Props) {
     blackoutOnBlur: true,
     restrictClipboard: false,
     onWarning: reason => {
+      if (supabase && activeTest?.id && attempt?.submissionId) {
+        void supabase.from("assessment_integrity_events").insert({
+          assessment_id: activeTest.id,
+          submission_id: attempt.submissionId,
+          student_id: userId,
+          event_type: reason,
+          details: { source: "browser-client" },
+        }).then(({ error }) => {
+          if (error) setNotice("An integrity warning was shown, but its audit event could not sync to the server.");
+        });
+      }
       const messages: Record<string, string> = {
         "tab-hidden": "Focus warning recorded: the exam tab became hidden. Return to the assessment and continue.",
         "print-screen": "Best-effort screen-capture shortcut warning recorded. Browser controls cannot guarantee screenshot prevention.",
