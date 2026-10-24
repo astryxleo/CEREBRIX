@@ -57,6 +57,9 @@ export default function TestBuilder({ onClose, onSave }: Props) {
     if (!name.trim()) { setError("Give this assessment a name first."); setStep("details"); return; }
     if (!questions.length || questions.some(q => !q.prompt.trim())) { setError("Add the question prompt for every question before saving."); setStep("questions"); return; }
     if (shouldPublish && !scheduledAt) { setError("Choose a start date and time before scheduling this test."); setStep("details"); return; }
+    if (shouldPublish && scheduledAt && new Date(scheduledAt).getTime() <= Date.now()) { setError("Choose a future opening date and time."); setStep("details"); return; }
+    if (shouldPublish && deadline && scheduledAt && new Date(deadline).getTime() <= new Date(scheduledAt).getTime()) { setError("The closing time must be later than the opening time."); setStep("details"); return; }
+    if (shouldPublish && deadline && new Date(deadline).getTime() <= Date.now()) { setError("Choose a future closing date and time."); setStep("details"); return; }
     const date = scheduledAt ? new Date(scheduledAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "Draft · Not scheduled";
     onSave({
       name: name.trim(), subject: subject === "CSV" || subject === "TXT" || subject === "Binary" ? subject + " · File handling" : subject,
