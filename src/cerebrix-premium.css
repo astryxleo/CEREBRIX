@@ -156,3 +156,33 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .grading-chart-footnote { display:block; margin-top:4px; color:rgba(220,230,242,.36); font-size:9px; line-height:1.5; }
 @media(max-width:900px) { .grading-command-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .grading-chart-grid { grid-template-columns:minmax(0,1fr); } }
 @media(max-width:480px) { .grading-command-metric { padding:12px; } .grading-command-metric strong { font-size:23px; } .grading-chart-panel { padding:13px; } }
+
+/* Cerebrix animated OverviewTab — pure-black, electric-blue glass */
+.cbx-overview { position:relative; isolation:isolate; width:100%; margin:0 0 26px; padding:clamp(22px,3vw,38px) 0 0; color:#F5FAFF; }
+.cbx-overview-atmosphere { position:absolute; z-index:-1; pointer-events:none; top:-65px; left:50%; width:min(780px,100%); height:420px; transform:translateX(-50%); background:radial-gradient(ellipse at 50% 38%,rgba(0,102,255,.15),transparent 54%),radial-gradient(ellipse at 50% 48%,rgba(0,207,255,.06),transparent 68%); filter:blur(18px); }
+.cbx-overview-hero { display:flex; align-items:center; flex-direction:column; text-align:center; }
+.cbx-logo-stage { display:grid; place-items:center; width:min(100%,360px); min-height:clamp(170px,23vw,255px); transform-origin:center; will-change:transform,opacity; }
+.cbx-overview-logo { display:block; width:clamp(148px,19vw,218px); max-height:225px; object-fit:contain; user-select:none; -webkit-user-drag:none; will-change:filter; }
+.cbx-overview-copy { margin:10px auto 0; max-width:800px; }
+.cbx-overview-kicker { display:flex; justify-content:center; align-items:center; gap:11px; color:#00CFFF; font:9px "JetBrains Mono",monospace; letter-spacing:.2em; }
+.cbx-overview-kicker span { width:clamp(18px,4vw,38px); height:1px; background:linear-gradient(90deg,transparent,rgba(0,207,255,.8)); }
+.cbx-overview-kicker span:last-child { transform:rotate(180deg); }
+.cbx-overview-copy h2 { margin:17px 0 10px; color:#F5FAFF; font-family:Inter,ui-sans-serif,system-ui,sans-serif; font-size:clamp(29px,4.3vw,48px); font-weight:750; line-height:1.12; letter-spacing:-.055em; text-wrap:balance; }
+.cbx-overview-copy h2>span:first-child { background:linear-gradient(100deg,#F5FAFF 5%,#8FCBFF 46%,#00CFFF 94%); background-clip:text; -webkit-background-clip:text; color:transparent; }
+.cbx-overview-copy .cbx-title-period { color:#0066FF; text-shadow:0 0 22px rgba(0,102,255,.7); }
+.cbx-overview-copy p { margin:0; color:rgba(220,230,242,.62); font-size:13px; line-height:1.7; letter-spacing:.01em; }
+.cbx-overview-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; width:100%; margin:clamp(30px,4vw,46px) 0 0; }
+.cbx-metric-card { position:relative; display:flex; min-width:0; min-height:164px; flex-direction:column; padding:19px 20px 15px; overflow:hidden; border:1px solid rgba(220,230,242,.2); border-radius:16px; background:linear-gradient(145deg,rgba(15,21,33,.78),rgba(4,7,13,.91) 76%); box-shadow:inset 0 1px rgba(255,255,255,.035),0 14px 38px rgba(0,0,0,.2); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); transition:background .25s ease,box-shadow .25s ease,border-color .25s ease; }
+.cbx-metric-card:before { content:""; position:absolute; inset:0 auto auto 15%; width:70%; height:1px; background:linear-gradient(90deg,transparent,rgba(0,207,255,.45),transparent); opacity:.65; }
+.cbx-metric-card:hover { background:linear-gradient(145deg,rgba(10,31,62,.7),rgba(4,7,13,.96)); box-shadow:0 12px 42px rgba(0,102,255,.11),inset 0 1px rgba(255,255,255,.05); }
+.cbx-metric-card-top { display:flex; align-items:center; justify-content:space-between; gap:10px; color:rgba(220,230,242,.65); font-size:11px; font-weight:550; }
+.cbx-metric-icon { display:grid; place-items:center; width:34px; height:34px; flex:0 0 auto; border:1px solid; border-radius:10px; }
+.cbx-metric-card>strong { display:block; margin:17px 0 4px; overflow-wrap:anywhere; color:#F5FAFF; font:700 clamp(24px,2.7vw,34px)/1.1 "JetBrains Mono",monospace; letter-spacing:-.06em; }
+.cbx-metric-card>strong.cbx-metric-status { font:700 clamp(18px,2vw,23px)/1.3 Inter,ui-sans-serif,sans-serif; letter-spacing:-.025em; }
+.cbx-metric-card>p { margin:0 0 16px; color:rgba(220,230,242,.43); font-size:10px; line-height:1.55; }
+.cbx-metric-card-bottom { display:flex; align-items:center; gap:7px; margin-top:auto; color:rgba(220,230,242,.35); font:8px "JetBrains Mono",monospace; letter-spacing:.1em; }
+.cbx-metric-card-bottom>span:first-child { width:5px; height:5px; border-radius:50%; }
+.cbx-metric-card-bottom>svg { margin-left:auto; color:rgba(220,230,242,.45); }
+@media(max-width:760px) { .cbx-overview { padding-top:12px; } .cbx-logo-stage { min-height:170px; } .cbx-overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .cbx-metric-card:last-child { grid-column:1/-1; } }
+@media(max-width:440px) { .cbx-overview-metrics { grid-template-columns:minmax(0,1fr); } .cbx-metric-card:last-child { grid-column:auto; } .cbx-metric-card { min-height:145px; } .cbx-overview-copy h2 { font-size:29px; } .cbx-title-break { display:none; } }
+@media(prefers-reduced-motion:reduce) { .cbx-logo-stage,.cbx-overview-logo { animation:none!important; transition:none!important; } .cbx-metric-card { transition:none!important; } }
