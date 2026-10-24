@@ -5,6 +5,7 @@ import App from "./App";
 import AuthGate from "./AuthGate";
 import "./index.css";
 import "./cerebrix-premium.css";
+import "./cerebrix-cinematic.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
