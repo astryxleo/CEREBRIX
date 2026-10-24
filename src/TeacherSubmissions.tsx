@@ -66,7 +66,11 @@ export default function TeacherSubmissions({ tests, userId }: Props) {
       }
     };
     void load();
-    return () => { alive = false; };
+    const channel = supabase!.channel(`teacher-submissions-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "assessment_submissions" }, () => { void load(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "assessment_grades" }, () => { void load(); })
+      .subscribe();
+    return () => { alive = false; void supabase!.removeChannel(channel); };
   }, [userId, tests]);
 
   const allRows = useMemo(() => Object.entries(attempts).filter(([, a]) => Boolean(a.submittedAt)).map(([name, a]) => ({ name, attempt: a, test: tests.find(t => t.id === a.assessmentId) ?? tests.find(t => t.name === a.testName), grade: grades[name] })).sort((a,b) => (b.attempt.submittedAt || 0) - (a.attempt.submittedAt || 0)), [attempts, tests, grades]);
