@@ -32,7 +32,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
  const [mobileNav,setMobileNav]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
- useEffect(()=>{if(role==="Student"&&location.pathname!=="/"){navigate("/",{replace:true});return;}setActive(pathTabs[location.pathname]??"Overview");setShowCreate(role==="Teacher"&&location.pathname==="/builder");},[location.pathname,role,navigate]);
+ useEffect(()=>{if(role==="Student"&&location.pathname!=="/"&&location.pathname!=="/terminated"){navigate("/",{replace:true});return;}setActive(pathTabs[location.pathname]??"Overview");setShowCreate(role==="Teacher"&&location.pathname==="/builder");},[location.pathname,role,navigate]);
  const [dashboardStats,setDashboardStats]=useState({scheduled:0,participants:0,pending:0,average:null as number|null});
  const allTests=[...createdTests,...tests];
  const filtered=allTests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
@@ -86,6 +86,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
   void loadAssessments();
   return()=>{alive=false;};
  },[user.id,role]);
+ if (role === "Student" && location.pathname === "/terminated") return <main className="fortress-terminated"><motion.div className="fortress-terminated-card" initial={{opacity:0,y:18,scale:.98}} animate={{opacity:1,y:0,scale:1}}><div className="fortress-terminated-icon"><ShieldCheck size={30}/></div><span className="panel-kicker">CEREBRIX / FORTRESS SECURITY</span><h1>EXAM TERMINATED<span>.</span></h1><p>The assessment was automatically submitted after three recorded integrity warnings. Browser signals can be imperfect; contact your teacher if you believe this was a mistake.</p><div className="fortress-terminated-status"><Check size={15}/> Submission status recorded</div><button className="primary-btn" onClick={()=>navigate("/",{replace:true})}>Return to student portal <ArrowRight size={15}/></button></motion.div></main>;
  return <div className="app-shell">
   <aside className={`sidebar ${mobileNav?"sidebar-open":""}`}>
    <div className="side-top"><Brand/><button className="icon-btn mobile-close" onClick={()=>setMobileNav(false)} aria-label="Close menu"><X size={18}/></button></div>
