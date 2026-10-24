@@ -30,7 +30,7 @@ export default function OverviewTab({
   systemStatus = "Operational",
 }: OverviewTabProps) {
   const metrics = [
-    { label: "Total Students", value: totalStudents.toLocaleString(), detail: "Unique students with recorded activity", icon: Users, accent: "#0066FF" },
+    { label: "Total Students", value: totalStudents.toLocaleString(), detail: "Students assigned to your class roster", icon: Users, accent: "#0066FF" },
     { label: "Active Tests", value: activeTests.toLocaleString(), detail: "Scheduled or published assessments", icon: FileCode2, accent: "#00CFFF" },
     { label: "System Status", value: systemStatus, detail: "Workspace service health", icon: Activity, accent: statusColor[systemStatus] },
   ];
