@@ -139,3 +139,20 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .teacher-simulation-terminal pre { flex:1; min-height:132px; margin:12px 0; padding:10px; overflow:auto; border:1px solid rgba(220,230,242,.06); border-radius:8px; background:rgba(0,0,0,.55); color:rgba(220,230,242,.72); white-space:pre-wrap; overflow-wrap:anywhere; font:10px/1.8 "JetBrains Mono",monospace; }
 .teacher-simulation-terminal .primary-btn { justify-content:center; width:100%; box-shadow:0 0 20px rgba(0,102,255,.22); }
 @media(max-width:900px) { .teacher-review-split { grid-template-columns:minmax(0,1fr); } .teacher-simulation-terminal pre { min-height:90px; } }
+
+.grading-command-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:18px 0 12px; }
+.grading-command-metric { min-width:0; padding:15px 16px; border:1px solid rgba(220,230,242,.1); border-radius:13px; background:linear-gradient(145deg,rgba(17,19,27,.9),rgba(4,6,10,.95)); box-shadow:inset 0 1px rgba(255,255,255,.025); }
+.grading-command-metric>span { display:block; color:rgba(220,230,242,.5); font:9px "JetBrains Mono",monospace; letter-spacing:.09em; }
+.grading-command-metric strong { display:block; margin:10px 0 4px; color:#f5faff; font:700 27px "JetBrains Mono",monospace; letter-spacing:-.06em; }
+.grading-command-metric small { color:rgba(220,230,242,.42); font-size:10px; }
+.grading-chart-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:12px 0 18px; }
+.grading-chart-panel { min-width:0; padding:16px; border:1px solid rgba(220,230,242,.1); border-radius:14px; background:linear-gradient(155deg,rgba(10,14,23,.96),rgba(2,4,8,.98)); box-shadow:0 14px 38px rgba(0,0,0,.18); }
+.grading-chart-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.grading-chart-heading h3 { margin:6px 0 0; color:#f5faff; font-size:16px; font-weight:650; }
+.chart-live-dot { display:inline-flex; align-items:center; gap:6px; color:#00cfff; font:8px "JetBrains Mono",monospace; letter-spacing:.07em; }
+.chart-live-dot:before { content:""; width:5px; height:5px; border-radius:50%; background:#00cfff; box-shadow:0 0 10px rgba(0,207,255,.7); }
+.grading-chart { width:100%; height:190px; margin-top:10px; }
+.grading-chart-empty { display:grid; min-height:160px; place-items:center; margin:10px 0 0; color:rgba(220,230,242,.42); font-size:11px; text-align:center; }
+.grading-chart-footnote { display:block; margin-top:4px; color:rgba(220,230,242,.36); font-size:9px; line-height:1.5; }
+@media(max-width:900px) { .grading-command-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .grading-chart-grid { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:480px) { .grading-command-metric { padding:12px; } .grading-command-metric strong { font-size:23px; } .grading-chart-panel { padding:13px; } }
