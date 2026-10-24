@@ -94,3 +94,33 @@
 .teacher-submissions{display:grid;gap:17px;min-width:0}.submission-layout{display:grid;grid-template-columns:minmax(230px,.75fr) minmax(0,1.5fr);gap:15px;align-items:start}.submission-list{display:grid;gap:8px;min-width:0}.submission-row{position:relative;display:flex;align-items:flex-start;gap:10px;text-align:left;width:100%;padding:14px 12px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(145deg,#0a1019,#05080d);color:var(--ice);min-width:0}.submission-row:hover,.submission-row.selected{border-color:rgba(0,207,255,.32);background:linear-gradient(145deg,rgba(0,102,255,.1),#05080d)}.submission-row-icon{width:32px;height:32px;display:grid;place-items:center;flex-shrink:0;border:1px solid rgba(0,207,255,.15);border-radius:8px;background:rgba(0,102,255,.09);color:#79caff}.submission-row-copy{display:grid;gap:5px;min-width:0;flex:1;padding-right:2px}.submission-row-copy strong{font-size:11px;line-height:1.5;overflow-wrap:anywhere}.submission-row-copy small{font-size:9px;line-height:1.5;color:#8192a7}.submission-row .student-state{position:static;align-self:flex-start;white-space:nowrap}.submission-detail{min-width:0;border:1px solid var(--line);border-radius:13px;padding:19px;background:linear-gradient(145deg,#0b111b,#05080c)}.submission-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}.submission-detail-head h3{font-size:17px;margin:9px 0 0;overflow-wrap:anywhere}.submission-max{white-space:nowrap;border:1px solid rgba(0,207,255,.17);border-radius:6px;padding:6px 8px;color:#8ddcff;font:9px 'DM Mono',monospace}.submission-answer{padding:15px 0;border-top:1px solid var(--line)}.submission-answer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.submission-answer-head strong{font-size:11px;line-height:1.6}.submission-answer-head span{font:9px 'DM Mono',monospace;color:#8bdcff;white-space:nowrap}.submission-answer>p{font-size:10px;line-height:1.7;color:#8e9fb4;white-space:pre-wrap}.submission-answer pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#030609;border:1px solid rgba(220,230,242,.09);border-radius:8px;padding:12px;color:#d2e5f5;font:11px/1.7 'DM Mono',monospace;margin:10px 0 0;max-height:300px;overflow:auto}.grade-form{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:17px;margin-top:5px}.grade-form label{display:grid;gap:7px;color:#9aacc1;font-size:10px}.grade-form input,.grade-form textarea{width:100%;min-width:0;border:1px solid rgba(220,230,242,.13);border-radius:8px;background:#030609;color:#f5faff;padding:11px;font-size:11px}.grade-form textarea{resize:vertical;line-height:1.6}.grade-form .primary-btn{justify-content:center}.grade-saved{font-size:9px;color:#56dcb0;line-height:1.6}.teacher-submissions .student-preview-banner{margin-bottom:0}
 @media(max-width:900px){.submission-layout{grid-template-columns:1fr}.submission-list{grid-template-columns:repeat(2,minmax(0,1fr))}.submission-row{flex-wrap:wrap}.submission-row-copy{flex-basis:calc(100% - 45px)}.submission-row .student-state{margin-left:42px}}
 @media(max-width:560px){.submission-list{grid-template-columns:1fr}.submission-row{flex-wrap:nowrap}.submission-row-copy{flex-basis:auto}.submission-row .student-state{margin-left:0}.submission-detail{padding:14px}.submission-detail-head{flex-direction:column}}
+
+/* Local assessment analytics */
+.analytics-workspace{display:flex;flex-direction:column;gap:20px}
+.analytics-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.analytics-metric{min-width:0;padding:19px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(145deg,rgba(12,20,31,.96),rgba(5,8,13,.96));box-shadow:inset 0 1px rgba(255,255,255,.025)}
+.analytics-metric>span{display:flex;align-items:center;gap:8px;color:#aab9cb;font-size:12px}
+.analytics-metric>span svg{color:var(--cyan)}
+.analytics-metric>strong{display:block;margin:17px 0 7px;font-size:30px;letter-spacing:-1px;color:var(--ice)}
+.analytics-metric>strong small{font-size:11px;letter-spacing:0;color:var(--muted);font-weight:500}
+.analytics-metric>small{font-size:11px;color:var(--muted)}
+.analytics-panel{padding:22px}
+.analytics-test-list{display:flex;flex-direction:column}
+.analytics-test-row{display:grid;grid-template-columns:38px minmax(120px,1fr) 68px 62px 100px;align-items:center;gap:15px;padding:17px 0;border-bottom:1px solid var(--line)}
+.analytics-test-row:last-child{border-bottom:0}
+.analytics-test-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;color:var(--cyan);background:rgba(0,207,255,.08);border:1px solid rgba(0,207,255,.14)}
+.analytics-test-main{min-width:0;display:flex;flex-direction:column;gap:6px}
+.analytics-test-main>strong{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.analytics-test-main>span,.analytics-test-stat>span{font-size:11px;color:var(--muted)}
+.analytics-track{height:4px;overflow:hidden;border-radius:10px;background:#18212d;margin-top:4px}
+.analytics-track i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .3s ease}
+.analytics-test-stat{display:flex;flex-direction:column;gap:4px;text-align:center}
+.analytics-test-stat strong{font-size:17px}
+.analytics-test-score{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.analytics-test-score>strong{font-size:19px;color:var(--cyan)}
+.analytics-test-score>span:not(.analytics-no-score){display:flex;align-items:center;gap:4px;color:#8b9caf;font-size:10px}
+.analytics-no-score{font-size:11px;color:var(--muted)}
+.analytics-footnote{display:flex;align-items:center;gap:8px;margin-top:13px;padding-top:15px;border-top:1px solid var(--line);color:#8191a5;font-size:11px}
+.analytics-footnote svg{color:var(--cyan);flex-shrink:0}
+@media(max-width:900px){.analytics-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-test-row{grid-template-columns:34px minmax(100px,1fr) 54px 54px 82px;gap:9px}}
+@media(max-width:560px){.analytics-metrics{gap:9px}.analytics-metric{padding:14px}.analytics-metric>strong{font-size:25px}.analytics-panel{padding:15px}.analytics-test-row{grid-template-columns:30px minmax(0,1fr) 48px;gap:9px}.analytics-test-icon{width:30px;height:30px}.analytics-test-stat:nth-of-type(4){display:none}.analytics-test-score{grid-column:2 / 4;flex-direction:row;align-items:center;justify-content:space-between;padding-top:2px}.analytics-test-main>strong{white-space:normal}.analytics-test-main>span{font-size:10px}}
