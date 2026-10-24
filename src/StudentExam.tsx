@@ -30,7 +30,7 @@ export default function StudentExam({ tests, userId }: Props) {
   const fortress = useAntiCheating({
     enabled: Boolean(activeTest && attempt && !attempt.submittedAt),
     blackoutOnBlur: true,
-    restrictClipboard: false,
+    restrictClipboard: true,
     onWarning: reason => {
       if (supabase && activeTest?.id && attempt?.submissionId) {
         void supabase.from("assessment_integrity_events").insert({
