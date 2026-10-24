@@ -8,7 +8,7 @@ import { supabase } from "./lib/supabase";
 
 type Props = { tests: BuilderTest[]; userId: string };
 type Attempt = { testName: string; assessmentId?: string; submissionId?: string; startedAt: number; answers: Record<string, string>; reviewedQuestions?: string[]; submittedAt?: number };
-const attemptsKey = "cerebrix.student.attempts.v1";
+const attemptsKey = (userId: string) => `cerebrix.student.attempts.v1.${userId}`;
 
 function readAttempts(): Record<string, Attempt> {
   try { return JSON.parse(localStorage.getItem(attemptsKey) || "{}") as Record<string, Attempt>; }
@@ -16,7 +16,7 @@ function readAttempts(): Record<string, Attempt> {
 }
 
 export default function StudentExam({ tests, userId }: Props) {
-  const [attempts, setAttempts] = useState<Record<string, Attempt>>(readAttempts);
+  const [attempts, setAttempts] = useState<Record<string, Attempt>>(() => readAttempts(attemptsKey(userId)));
   const [activeName, setActiveName] = useState<string | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [now, setNow] = useState(Date.now());
@@ -61,7 +61,7 @@ export default function StudentExam({ tests, userId }: Props) {
     return () => window.clearInterval(id);
   }, []);
   useEffect(() => {
-    try { localStorage.setItem(attemptsKey, JSON.stringify(attempts)); } catch { /* Storage can be unavailable. */ }
+    try { localStorage.setItem(attemptsKey(userId), JSON.stringify(attempts)); } catch { /* Storage can be unavailable. */ }
   }, [attempts]);
   useEffect(() => {
     if (!supabase) return;
