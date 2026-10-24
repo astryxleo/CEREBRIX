@@ -31,6 +31,14 @@ export default function StudentExam({ tests }: Props) {
   useEffect(() => {
     try { localStorage.setItem(attemptsKey, JSON.stringify(attempts)); } catch { /* Storage can be unavailable. */ }
   }, [attempts]);
+  useEffect(() => {
+    if (!activeTest || !attempt || attempt.submittedAt || remainingSeconds > 0) return;
+    setAttempts(current => {
+      const latest = current[activeTest.name];
+      if (!latest || latest.submittedAt) return current;
+      return { ...current, [activeTest.name]: { ...latest, submittedAt: Date.now() } };
+    });
+  }, [activeTest, attempt, remainingSeconds]);
 
   const begin = (test: BuilderTest) => {
     const previous = attempts[test.name];
