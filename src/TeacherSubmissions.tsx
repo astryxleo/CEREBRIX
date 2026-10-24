@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Editor from "@monaco-editor/react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import { CheckCircle2, ClipboardList, Download, FileCode2, MessageSquareText, Save, Search } from "lucide-react";
+import { CheckCircle2, ClipboardList, Download, FileCode2, MessageSquareText, Save, Search, ShieldCheck } from "lucide-react";
 import type { BuilderTest } from "./TestBuilder";
 import { supabase } from "./lib/supabase";
 
@@ -18,6 +18,7 @@ function read<T,>(key: string, fallback: T): T {
 export default function TeacherSubmissions({ tests, userId }: Props) {
   const [attempts, setAttempts] = useState<Record<string, Attempt>>(() => read(attemptsKey, {}));
   const [grades, setGrades] = useState<Record<string, Grade>>(() => read(gradesKey, {}));
+  const [integrityCounts, setIntegrityCounts] = useState<Record<string, { count: number; latest?: string }>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState("0");
   const [feedback, setFeedback] = useState("");
@@ -50,6 +51,19 @@ export default function TeacherSubmissions({ tests, userId }: Props) {
       }
       setAttempts(current => ({ ...current, ...remoteAttempts }));
       setGrades(current => ({ ...current, ...remoteGrades }));
+      if (Object.keys(remoteAttempts).length) {
+        const { data: events } = await supabase!.from("assessment_integrity_events")
+          .select("submission_id,event_type,occurred_at")
+          .in("submission_id", Object.keys(remoteAttempts))
+          .order("occurred_at", { ascending: false });
+        if (!alive) return;
+        const counts: Record<string, { count: number; latest?: string }> = {};
+        for (const event of events ?? []) {
+          const previous = counts[event.submission_id] ?? { count: 0 };
+          counts[event.submission_id] = { count: previous.count + 1, latest: previous.latest ?? event.event_type };
+        }
+        setIntegrityCounts(counts);
+      }
     };
     void load();
     return () => { alive = false; };
@@ -121,6 +135,7 @@ export default function TeacherSubmissions({ tests, userId }: Props) {
     {rows.length === 0 ? <div className="student-empty"><div className="student-empty-icon"><FileCode2 size={25}/></div><h3>{allRows.length ? "No matching submissions" : "No submitted attempts yet"}</h3><p>{allRows.length ? "Try another search or switch the grading filter." : "Switch to Student preview, start a scheduled assessment and submit it on this device to see it appear here."}</p></div> : <div className="submission-layout">
       <div className="submission-list">{rows.map(row => <motion.button layout initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.2}} className={active?.name === row.name ? "submission-row selected" : "submission-row"} key={row.name} onClick={() => startGrade(row.name, row.grade)}><span className="submission-row-icon"><FileCode2 size={16}/></span><span className="submission-row-copy"><strong>{row.attempt.testName}</strong><small>Submitted {new Date(row.attempt.submittedAt || 0).toLocaleString()}</small><small>{Object.values(row.attempt.answers).filter(v => v.trim()).length} answers recorded</small></span><span className={row.grade ? "student-state done" : "student-state"}>{row.grade ? `${row.grade.score} marks` : "Ungraded"}</span></button>)}</div>
       {active ? <article className="submission-detail"><div className="submission-detail-head"><div><span className="panel-kicker">SUBMISSION REVIEW</span><h3>{active.attempt.testName}</h3></div><span className="submission-max">{active.test?.totalMarks ?? 100} max marks</span></div>
+        {integrityCounts[active.name]?.count ? <div className="integrity-review-note"><ShieldCheck size={16}/><div><strong>{integrityCounts[active.name].count} integrity warning{integrityCounts[active.name].count === 1 ? "" : "s"} logged</strong><p>Most recent event: {integrityCounts[active.name].latest?.replaceAll("-", " ") ?? "Recorded"} · Browser telemetry is best-effort, not proof of misconduct.</p></div></div> : null}
         {(active.test?.questions || []).map((q, i) => <section className="submission-answer" key={q.id}><div className="submission-answer-head"><strong>Q{ i + 1 }. {q.title.trim() || `Question ${i + 1}`}</strong><span>{q.marks} marks</span></div><p>{q.prompt}</p><div className="teacher-code-view"><div className="exam-monaco-toolbar"><span><i/> submission.{q.kind === "Python" ? "py" : q.kind === "MySQL" ? "sql" : "txt"}</span><span>READ ONLY · NO EXECUTION</span></div><Editor height="190px" language={q.kind === "Python" ? "python" : q.kind === "MySQL" ? "sql" : "plaintext"} theme="vs-dark" value={active.attempt.answers[String(q.id)]?.trim() || "No answer provided."} options={{readOnly:true,domReadOnly:true,contextmenu:false,fontFamily:"JetBrains Mono, monospace",fontSize:13,minimap:{enabled:false},lineNumbers:"on",scrollBeyondLastLine:false,automaticLayout:true,wordWrap:"on",renderLineHighlight:"none",overviewRulerLanes:0,hideCursorInOverviewRuler:true,scrollbar:{vertical:"auto",horizontal:"auto"}}}/></div></section>)}
         <div className="grade-form"><label>Score (out of {active.test?.totalMarks ?? 100})<input type="number" min="0" max={active.test?.totalMarks ?? 100} value={score} onChange={e => setScore(e.target.value)}/></label><label>Teacher feedback<textarea rows={3} value={feedback} onChange={e => setFeedback(e.target.value)} placeholder="Share feedback or next steps…"/></label><div className="grade-actions"><button className="secondary-btn" onClick={() => setNotice("Code execution is not enabled. Configure an isolated server-side sandbox before running student submissions; no code was executed.")}><FileCode2 size={15}/> Run Code</button><button className="primary-btn" onClick={saveGrade}><Save size={15}/> Save grade {supabase && active.attempt.submissionId ? "to workspace" : "locally"}</button></div>{active.grade && <small className="grade-saved">Last graded {new Date(active.grade.gradedAt).toLocaleString()} · {active.grade.score} marks</small>}</div>
       </article> : <div className="student-empty"><div className="student-empty-icon"><ClipboardList size={25}/></div><h3>Select a submission</h3><p>Choose an attempt from the inbox to review answers and enter a grade.</p></div>}
