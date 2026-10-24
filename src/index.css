@@ -188,3 +188,11 @@
 .teacher-submissions>.student-exam-header .student-count{min-width:115px}
 .teacher-submissions>.student-exam-header .secondary-btn{white-space:nowrap}
 @media(max-width:600px){.teacher-submissions>.student-exam-header .directory-header-actions{justify-content:flex-start}.teacher-submissions>.student-exam-header .student-count{flex:1}}
+
+
+/* Submission inbox search and status filters */
+.submissions-toolbar{gap:12px}
+.submissions-toolbar .tests-search{min-width:200px}
+.submissions-toolbar .tests-filters{flex-wrap:wrap}
+.submissions-toolbar .tests-filters>button{white-space:nowrap}
+@media(max-width:560px){.submissions-toolbar .tests-search{min-width:100%;padding:0 5px}.submissions-toolbar .tests-filters{width:100%;justify-content:space-between}.submissions-toolbar .tests-filters>button{flex:1;justify-content:center}}
