@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Editor from "@monaco-editor/react";
-import { useAntiCheating } from "./useAntiCheating";
+import { useFortressSecurity } from "./useFortressSecurity";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, FileCode2, Send, ShieldCheck } from "lucide-react";
 import type { BuilderTest } from "./TestBuilder";
 import { supabase } from "./lib/supabase";
@@ -16,6 +17,7 @@ function readAttempts(key: string): Record<string, Attempt> {
 }
 
 export default function StudentExam({ tests, userId }: Props) {
+  const navigate = useNavigate();
   const [attempts, setAttempts] = useState<Record<string, Attempt>>(() => readAttempts(attemptsKey(userId)));
   const [activeName, setActiveName] = useState<string | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -27,31 +29,38 @@ export default function StudentExam({ tests, userId }: Props) {
   const activeKey = activeTest ? (activeTest.id ?? activeTest.name) : null;
   const attempt = activeKey ? attempts[activeKey] : undefined;
   const currentQuestion = activeTest?.questions[questionIndex];
-  const fortress = useAntiCheating({
+  const fortress = useFortressSecurity({
     enabled: Boolean(activeTest && attempt && !attempt.submittedAt),
-    blackoutOnBlur: true,
     restrictClipboard: true,
-    onWarning: reason => {
+    onStrike: (reason, strike) => {
       if (supabase && activeTest?.id && attempt?.submissionId) {
         void supabase.from("assessment_integrity_events").insert({
           assessment_id: activeTest.id,
           submission_id: attempt.submissionId,
           student_id: userId,
           event_type: reason,
-          details: { source: "browser-client" },
+          details: { source: "browser-client", strike },
         }).then(({ error }) => {
-          if (error) setNotice("An integrity warning was shown, but its audit event could not sync to the server.");
+          if (error) setNotice("An integrity warning appeared, but its audit event could not sync to the server.");
         });
       }
-      const messages: Record<string, string> = {
-        "tab-hidden": "Focus warning recorded: the exam tab became hidden. Return to the assessment and continue.",
-        "print-screen": "Best-effort screen-capture shortcut warning recorded. Browser controls cannot guarantee screenshot prevention.",
-        "devtools-shortcut": "Developer-tools shortcut warning recorded.",
-        "context-menu": "Right-click was disabled during the active assessment.",
-        "clipboard": "Clipboard interaction was blocked.",
-      };
-      setNotice(messages[reason] ?? "Exam integrity warning recorded.");
+      setNotice("Integrity warning " + strike + "/3: " + reason.replaceAll("-", " ") + ". Browser checks are best-effort.");
     },
+    autoSubmitTest: async reason => {
+      const ok = await submit(true);
+      if (ok && supabase && activeTest?.id && attempt?.submissionId) {
+        const { error } = await supabase.from("assessment_integrity_events").insert({
+          assessment_id: activeTest.id,
+          submission_id: attempt.submissionId,
+          student_id: userId,
+          event_type: "auto-terminated",
+          details: { source: "browser-client", reason, strikes: 3 },
+        });
+        if (error) setNotice("The attempt was submitted, but the termination audit event could not sync.");
+      }
+      return ok;
+    },
+    onTerminated: () => navigate("/terminated", { replace: true }),
   });
   const remainingSeconds = activeTest && attempt && !attempt.submittedAt
     ? Math.max(0, activeTest.duration * 60 - Math.floor((now - attempt.startedAt) / 1000)) : 0;
@@ -144,19 +153,20 @@ export default function StudentExam({ tests, userId }: Props) {
     const key = activeTest.id ?? activeTest.name;
     setAttempts(current => ({ ...current, [key]: { ...attempt, answers: { ...attempt.answers, [String(currentQuestion.id)]: value } } }));
   };
-  const submit = async () => {
-    if (!activeTest || !attempt || attempt.submittedAt) return;
+  const submit = async (automatic = false): Promise<boolean> => {
+    if (!activeTest || !attempt || attempt.submittedAt) return false;
     const submittedAt = Date.now();
     if (attempt.submissionId && supabase) {
       const { error } = await supabase.from("assessment_submissions")
         .update({ answers: attempt.answers, reviewed_questions: attempt.reviewedQuestions ?? [], status: "submitted", submitted_at: new Date(submittedAt).toISOString() })
         .eq("id", attempt.submissionId);
-      if (error) { setNotice("Submission could not reach the server. Keep this page open and retry."); return; }
+      if (error) { setNotice(automatic ? "Auto-submit failed to sync. Keep this page open and retry immediately." : "Submission could not reach the server. Keep this page open and retry."); return false; }
     }
     const key = activeTest.id ?? activeTest.name;
     setAttempts(current => ({ ...current, [key]: { ...attempt, submittedAt } }));
     setConfirmSubmit(false);
     setNotice("");
+    return true;
   };
   const formatTime = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 
@@ -165,7 +175,7 @@ export default function StudentExam({ tests, userId }: Props) {
     const submitted = Boolean(attempt.submittedAt);
     const expired = !submitted && remainingSeconds <= 0;
     return <section className="student-workspace">
-      <AnimatePresence>{fortress.isBlackout && <motion.div className="fortress-blackout" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} role="alert" aria-live="assertive"><div className="fortress-sigil"><ShieldCheck size={34}/></div><span className="panel-kicker">CEREBRIX / EXAM INTEGRITY</span><h2>FOCUS INTERRUPTED</h2><p>Your exam session lost focus or a capture shortcut was detected.</p><div className="fortress-warning-count">WARNINGS <strong>{fortress.warnings.toString().padStart(2,"0")}</strong></div><button className="primary-btn" onClick={() => { void fortress.resumeExam(); }}>Return to exam <ArrowRight size={15}/></button><small>Browser-based capture detection is best-effort and cannot block operating-system screenshots.</small></motion.div>}</AnimatePresence>
+      <AnimatePresence>{fortress.isBlackout && <motion.div className="fortress-blackout" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} role="alert" aria-live="assertive"><div className="fortress-sigil"><ShieldCheck size={34}/></div><span className="panel-kicker">CEREBRIX / EXAM INTEGRITY</span><h2>FORTRESS SECURITY ALERT</h2><p>An exam-integrity rule was triggered. This warning is browser-based and may be imperfect.</p><div className="fortress-warning-count">WARNINGS <strong>{fortress.strikes.toString().padStart(2,"0")}</strong></div><button className="primary-btn" onClick={() => fortress.resetBlackout()}>Return to exam <ArrowRight size={15}/></button><small>Browser-based capture detection is best-effort and cannot block operating-system screenshots.</small></motion.div>}</AnimatePresence>
       <button className="student-back" onClick={() => { setActiveName(null); setConfirmSubmit(false); }}><ArrowLeft size={15}/> All assessments</button>
       <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / STUDENT EXAM</span><h2>{activeTest.name}</h2><p>{activeTest.subject} · {activeTest.totalMarks} marks · {activeTest.questions.length} questions{(activeTest.negativeMarking ?? 0) > 0 ? ` · −${activeTest.negativeMarking} per wrong answer` : ""}</p></div><div className={remainingSeconds < 300 && !submitted ? "exam-timer urgent" : "exam-timer"}><Clock3 size={17}/><div><small>{submitted ? "STATUS" : "TIME REMAINING"}</small><strong>{submitted ? "Submitted" : formatTime(remainingSeconds)}</strong></div></div></div>
       {notice && <div className="notice"><ShieldCheck size={16}/><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Dismiss warning">×</button></div>}
