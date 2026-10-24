@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TestBuilder, { type BuilderTest } from "./TestBuilder";
 import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, Gauge, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X } from "lucide-react";
 
@@ -22,7 +22,7 @@ function App(){
  const [notice,setNotice]=useState("");
  const allTests=[...createdTests,...tests];
  const filtered=allTests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
- try { localStorage.setItem("cerebrix.teacher.tests.v1", JSON.stringify(createdTests)); } catch { /* Browser storage may be unavailable. */ }
+ useEffect(()=>{try{localStorage.setItem("cerebrix.teacher.tests.v1",JSON.stringify(createdTests));}catch{/* Browser storage may be unavailable. */}},[createdTests]);
  return <div className="app-shell">
   <aside className={`sidebar ${mobileNav?"sidebar-open":""}`}>
    <div className="side-top"><Brand/><button className="icon-btn mobile-close" onClick={()=>setMobileNav(false)} aria-label="Close menu"><X size={18}/></button></div>
