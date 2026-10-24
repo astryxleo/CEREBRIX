@@ -215,22 +215,20 @@ create or replace function public.guard_assessment_submission_update()
 returns trigger
 language plpgsql
 set search_path = pg_catalog, public
-as $
-begin
+as 'begin
   if new.student_id <> old.student_id
      or new.assessment_id <> old.assessment_id
      or new.started_at <> old.started_at then
-    raise exception 'Submission identity fields cannot be changed';
+    raise exception ''Submission identity fields cannot be changed'';
   end if;
-  if old.status = 'in_progress' and new.status = 'submitted' then
+  if old.status = ''in_progress'' and new.status = ''submitted'' then
     new.submitted_at := now();
   else
     new.submitted_at := null;
   end if;
   new.last_saved_at := now();
   return new;
-end;
-$;
+end;';
 
 drop trigger if exists guard_assessment_submission_update on public.assessment_submissions;
 create trigger guard_assessment_submission_update
