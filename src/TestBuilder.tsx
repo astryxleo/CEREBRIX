@@ -12,6 +12,8 @@ export type BuilderTest = {
   totalMarks: number;
   duration: number;
   scheduledAt: string;
+  deadline: string;
+  instructions: string;
   questionCount: number;
   questions: BuilderQuestion[];
 };
@@ -60,7 +62,7 @@ export default function TestBuilder({ onClose, onSave }: Props) {
       name: name.trim(), subject: subject === "CSV" || subject === "TXT" || subject === "Binary" ? subject + " · File handling" : subject,
       status: shouldPublish ? "Scheduled" : "Draft", date, students: "0 enrolled", progress: 0,
       accent: subject === "MySQL" || subject === "CSV" ? "cyan" : "blue",
-      totalMarks, duration, scheduledAt, questionCount: questions.length, questions,
+      totalMarks, duration, scheduledAt, deadline, instructions, questionCount: questions.length, questions,
     });
     onClose();
   };
