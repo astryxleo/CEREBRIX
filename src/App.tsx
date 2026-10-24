@@ -13,11 +13,7 @@ type Tab = "Overview" | "Tests" | "Submissions" | "Students" | "Analytics";
 const nav: {label: Tab; icon: typeof LayoutDashboard}[] = [
   {label:"Overview",icon:LayoutDashboard},{label:"Tests",icon:FileCode2},{label:"Submissions",icon:Code2},{label:"Students",icon:Users},{label:"Analytics",icon:Activity}
 ];
-const tests = [
-  {name:"Python Fundamentals",subject:"Python · Functions & loops",status:"Live",date:"Today, 11:30 AM",students:"28 / 32",progress:88,accent:"blue"},
-  {name:"SQL Query Challenge",subject:"MySQL · Joins & aggregation",status:"Scheduled",date:"Tomorrow, 9:00 AM",students:"32 enrolled",progress:0,accent:"cyan"},
-  {name:"File Handling Practical",subject:"CSV · TXT · Binary files",status:"Grading",date:"Oct 22, 10:00 AM",students:"30 / 30",progress:74,accent:"white"}
-];
+const tests: BuilderTest[] = [];
 function Brand(){return <div className="brand"><div className="brand-mark"><img src="/cerebrix.png" alt="" /></div><div><strong>CEREBRIX</strong><span>THINK. CODE. PROVE.</span></div></div>}
 function App({ user, profile, signOut }: { user: { id: string; email?: string }; profile: { display_name: string; role: "student" | "teacher" }; signOut: () => Promise<void> }){
  const [active,setActive]=useState<Tab>("Overview");
@@ -28,9 +24,34 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
  const [mobileNav,setMobileNav]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
+ const [dashboardStats,setDashboardStats]=useState({scheduled:0,participants:0,pending:0,average:null as number|null});
  const allTests=[...createdTests,...tests];
  const filtered=allTests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
  useEffect(()=>{try{localStorage.setItem("cerebrix.teacher.tests.v1",JSON.stringify(createdTests));}catch{/* Browser storage may be unavailable. */}},[createdTests]);
+ useEffect(()=>{
+  if(!supabase||role!=="Teacher")return;
+  let alive=true;
+  const loadStats=async()=>{
+   const [{data:assessments,error:assessmentError},{data:submissions,error:submissionError}]=await Promise.all([
+    supabase!.from("assessments").select("id,status"),
+    supabase!.from("assessment_submissions").select("id,student_id,assessment_id,assessment_grades(score)").eq("status","submitted")
+   ]);
+   if(!alive)return;
+   if(assessmentError||submissionError){setNotice("Some dashboard metrics could not be loaded from the shared workspace.");return;}
+   const rows=submissions??[];
+   const graded=rows.map((row:any)=>({row,grade:Array.isArray(row.assessment_grades)?row.assessment_grades[0]:row.assessment_grades})).filter((item:any)=>item.grade);
+   const maxById=new Map(createdTests.filter(test=>test.id).map(test=>[test.id!,test.totalMarks||100]));
+   const percentages=graded.map((item:any)=>Number(maxById.get(item.row.assessment_id)??100)>0?Number(item.grade.score)/Number(maxById.get(item.row.assessment_id)??100)*100:0);
+   setDashboardStats({
+    scheduled:(assessments??[]).filter((item:any)=>item.status==="scheduled"||item.status==="published").length,
+    participants:new Set(rows.map((row:any)=>row.student_id)).size,
+    pending:rows.length-graded.length,
+    average:percentages.length?Math.round(percentages.reduce((sum:number,value:number)=>sum+value,0)/percentages.length):null
+   });
+  };
+  void loadStats();
+  return()=>{alive=false;};
+ },[user.id,role,createdTests]);
  useEffect(()=>{
   if(!supabase)return;
   let alive=true;
@@ -77,10 +98,10 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
 {role === "Student" ? <StudentExam tests={createdTests} userId={user.id}/> : active === "Submissions" ? <TeacherSubmissions tests={createdTests} userId={user.id}/> : active === "Analytics" ? <TeacherAnalytics tests={createdTests} userId={user.id}/> : active === "Tests" ? <TeacherTests tests={createdTests} onCreate={() => setShowCreate(true)} onOpen={setSelectedTest}/> : active === "Students" ? <StudentDirectory/> : <>
     <section className="hero-emblem-panel"><div className="hero-emblem-glow"></div><div className="hero-emblem-orbit orbit-a"></div><div className="hero-emblem-orbit orbit-b"></div><div className="hero-emblem-orbit orbit-c"></div><div className="emblem-particle particle-a"></div><div className="emblem-particle particle-b"></div><div className="emblem-particle particle-c"></div><div className="hero-emblem"><img src="/cerebrix.png" alt="CEREBRIX emblem"/><div className="emblem-sheen"></div></div><div className="emblem-caption"><span className="emblem-caption-line"></span><div><strong>CEREBRIX</strong><small>INTELLIGENCE IN MOTION</small></div><span className="emblem-caption-line"></span></div><div className="emblem-coordinates coordinate-left">CBX / 001</div><div className="emblem-coordinates coordinate-right">SYSTEM ONLINE <i></i></div></section>
     <section className="metric-grid">
-     <div className="metric-card"><div className="metric-top"><span className="metric-label">Active assessments</span><span className="metric-icon blue"><FileCode2 size={17}/></span></div><div className="metric-value">04 <span className="metric-trend up"><ArrowUpRight size={13}/> +1</span></div><div className="metric-foot">Across all classes <span className="foot-dot"/></div><div className="metric-line"><span style={{width:"66%"}}/></div></div>
-     <div className="metric-card"><div className="metric-top"><span className="metric-label">Students participating</span><span className="metric-icon cyan"><Users size={17}/></span></div><div className="metric-value">128 <span className="metric-unit">students</span></div><div className="metric-foot"><span className="mini-green"><ArrowUpRight size={12}/> 12%</span> vs. last assessment</div><div className="metric-line cyan-line"><span style={{width:"78%"}}/></div></div>
-     <div className="metric-card"><div className="metric-top"><span className="metric-label">Pending reviews</span><span className="metric-icon white"><Clock3 size={17}/></span></div><div className="metric-value">08 <span className="metric-unit">to grade</span></div><div className="metric-foot">Keep your grading queue clear</div><div className="metric-line white-line"><span style={{width:"29%"}}/></div></div>
-     <div className="metric-card"><div className="metric-top"><span className="metric-label">Class average</span><span className="metric-icon cyan"><Gauge size={17}/></span></div><div className="metric-value">84<span className="metric-percent">%</span><span className="metric-trend up"><ArrowUpRight size={13}/> 4.2%</span></div><div className="metric-foot">Latest graded assessment</div><div className="metric-line cyan-line"><span style={{width:"84%"}}/></div></div>
+     <div className="metric-card"><div className="metric-top"><span className="metric-label">Active assessments</span><span className="metric-icon blue"><FileCode2 size={17}/></span></div><div className="metric-value">{String(dashboardStats.scheduled).padStart(2,"0")}</div><div className="metric-foot">From shared assessments <span className="foot-dot"/></div><div className="metric-line"><span style={{width:"66%"}}/></div></div>
+     <div className="metric-card"><div className="metric-top"><span className="metric-label">Students participating</span><span className="metric-icon cyan"><Users size={17}/></span></div><div className="metric-value">{dashboardStats.participants} <span className="metric-unit">students</span></div><div className="metric-foot">Unique students with submissions</div><div className="metric-line cyan-line"><span style={{width:"78%"}}/></div></div>
+     <div className="metric-card"><div className="metric-top"><span className="metric-label">Pending reviews</span><span className="metric-icon white"><Clock3 size={17}/></span></div><div className="metric-value">{String(dashboardStats.pending).padStart(2,"0")} <span className="metric-unit">to grade</span></div><div className="metric-foot">Keep your grading queue clear</div><div className="metric-line white-line"><span style={{width:"29%"}}/></div></div>
+     <div className="metric-card"><div className="metric-top"><span className="metric-label">Class average</span><span className="metric-icon cyan"><Gauge size={17}/></span></div><div className="metric-value">{dashboardStats.average===null?"—":dashboardStats.average}<span className="metric-percent">{dashboardStats.average===null?"":"%"}</span></div><div className="metric-foot">Across shared graded attempts</div><div className="metric-line cyan-line"><span style={{width:"84%"}}/></div></div>
     </section>
     <section className="content-grid">
      <div className="panel assessments-panel"><div className="panel-header"><div><div className="panel-kicker">ASSESSMENT OVERVIEW</div><h2>Your assessments</h2><p>Keep every test on track, from draft to final grade.</p></div><button className="text-btn" onClick={()=>setActive("Tests")}>View all <ArrowRight size={15}/></button></div>
