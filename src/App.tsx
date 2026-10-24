@@ -16,12 +16,13 @@ function App(){
  const [active,setActive]=useState<Tab>("Overview");
  const [role,setRole]=useState<"Teacher"|"Student">("Teacher");
  const [showCreate,setShowCreate]=useState(false);
- const [createdTests,setCreatedTests]=useState<BuilderTest[]>([]);
+ const [createdTests,setCreatedTests]=useState<BuilderTest[]>(()=>{try{const saved=localStorage.getItem("cerebrix.teacher.tests.v1");return saved?JSON.parse(saved) as BuilderTest[]:[]}catch{return []}});
  const [mobileNav,setMobileNav]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
  const allTests=[...createdTests,...tests];
  const filtered=allTests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
+ try { localStorage.setItem("cerebrix.teacher.tests.v1", JSON.stringify(createdTests)); } catch { /* Browser storage may be unavailable. */ }
  return <div className="app-shell">
   <aside className={`sidebar ${mobileNav?"sidebar-open":""}`}>
    <div className="side-top"><Brand/><button className="icon-btn mobile-close" onClick={()=>setMobileNav(false)} aria-label="Close menu"><X size={18}/></button></div>
