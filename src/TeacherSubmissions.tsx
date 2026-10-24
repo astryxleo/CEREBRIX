@@ -26,7 +26,7 @@ export default function TeacherSubmissions({ tests, userId }: Props) {
     let alive = true;
     const load = async () => {
       const { data, error } = await supabase!.from("assessment_submissions")
-        .select("id,assessment_id,student_id,answers,started_at,submitted_at,status,assessments(title,assessment_grades(score,feedback,graded_at))")
+        .select("id,assessment_id,student_id,answers,started_at,submitted_at,status,assessments(title),assessment_grades(score,feedback,graded_at)")
         .eq("status", "submitted").order("submitted_at", { ascending: false });
       if (!alive) return;
       if (error) { setNotice("Could not load shared submissions. Check that this account has Teacher access."); return; }
@@ -41,7 +41,7 @@ export default function TeacherSubmissions({ tests, userId }: Props) {
           answers: row.answers && typeof row.answers === "object" ? row.answers as Record<string, string> : {},
           submittedAt: row.submitted_at ? new Date(row.submitted_at).getTime() : undefined,
         };
-        const gradeRaw = assessment?.assessment_grades;
+        const gradeRaw = row.assessment_grades;
         const grade = Array.isArray(gradeRaw) ? gradeRaw[0] : gradeRaw;
         if (grade) remoteGrades[row.id] = { score: Number(grade.score), feedback: grade.feedback ?? "", gradedAt: new Date(grade.graded_at).getTime() };
       }
