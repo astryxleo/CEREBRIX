@@ -18,13 +18,17 @@ export default function StudentDirectory() {
   useEffect(() => { try { localStorage.setItem(storageKey, JSON.stringify(students)); } catch { /* Browser storage can be unavailable. */ } }, [students]);
   const filtered = useMemo(() => students.filter(student => (student.name + " " + student.email + " " + student.className).toLowerCase().includes(query.trim().toLowerCase())).sort((a,b) => a.name.localeCompare(b.name)), [students, query]);
   const exportCsv = () => {
-    const escapeCell = (value: string) => '"' + value.replace(/"/g, '""') + '"';
+    const escapeCell = (value: string) => {
+      // Prevent spreadsheet formula execution from user-controlled roster fields.
+      const safe = /^[\\t\\r\\n ]*[=+\\-@]/.test(value) ? "'" + value : value;
+      return '"' + safe.replace(/"/g, '""') + '"';
+    };
     const rows = [["Name", "Email", "Class / section", "Added at"], ...students.map(student => [student.name, student.email, student.className, new Date(student.addedAt).toISOString()])];
     const csv = rows.map(row => row.map(escapeCell).join(",")).join("\r\n");
     const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" }));
     const link = document.createElement("a");
     link.href = url; link.download = "cerebrix-students.csv"; link.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const addStudent = () => {
     const cleanName = name.trim();
