@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, Command, FileCode2, Filter, FlaskConical, Gauge, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, Settings2, ShieldCheck, Sparkles, Terminal, Users, X } from "lucide-react";
+import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, Gauge, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X } from "lucide-react";
 
 type Tab = "Overview" | "Tests" | "Submissions" | "Students" | "Analytics";
 const nav: {label: Tab; icon: typeof LayoutDashboard}[] = [
