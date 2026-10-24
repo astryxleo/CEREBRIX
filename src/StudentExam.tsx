@@ -10,8 +10,8 @@ type Props = { tests: BuilderTest[]; userId: string };
 type Attempt = { testName: string; assessmentId?: string; submissionId?: string; startedAt: number; answers: Record<string, string>; reviewedQuestions?: string[]; submittedAt?: number };
 const attemptsKey = (userId: string) => `cerebrix.student.attempts.v1.${userId}`;
 
-function readAttempts(): Record<string, Attempt> {
-  try { return JSON.parse(localStorage.getItem(attemptsKey) || "{}") as Record<string, Attempt>; }
+function readAttempts(key: string): Record<string, Attempt> {
+  try { return JSON.parse(localStorage.getItem(key) || "{}") as Record<string, Attempt>; }
   catch { return {}; }
 }
 
