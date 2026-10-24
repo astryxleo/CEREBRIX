@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Editor from "@monaco-editor/react";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CheckCircle2, ClipboardList, Download, FileCode2, MessageSquareText, Save, Search, ShieldCheck } from "lucide-react";
 import type { BuilderTest } from "./TestBuilder";
 import { supabase } from "./lib/supabase";
@@ -75,6 +75,19 @@ export default function TeacherGradingStudio({ tests, userId }: Props) {
   }, [userId, tests]);
 
   const allRows = useMemo(() => Object.entries(attempts).filter(([, a]) => Boolean(a.submittedAt)).map(([name, a]) => ({ name, attempt: a, test: tests.find(t => t.id === a.assessmentId) ?? tests.find(t => t.name === a.testName), grade: grades[name], terminated: Boolean(integrityCounts[name]?.terminated) })).sort((a,b) => (b.attempt.submittedAt || 0) - (a.attempt.submittedAt || 0)), [attempts, tests, grades, integrityCounts]);
+  const performance = useMemo(() => {
+    const graded = allRows.filter(row => row.grade && (row.test?.totalMarks ?? 100) > 0);
+    const average = graded.length ? Math.round(graded.reduce((sum, row) => sum + ((row.grade!.score / (row.test?.totalMarks ?? 100)) * 100), 0) / graded.length) : null;
+    const subjects = new Map<string, { total: number; count: number }>();
+    for (const row of graded) {
+      const subject = row.test?.subject || "Other";
+      const previous = subjects.get(subject) ?? { total: 0, count: 0 };
+      previous.total += row.grade!.score / (row.test?.totalMarks ?? 100) * 100;
+      previous.count += 1;
+      subjects.set(subject, previous);
+    }
+    return { average, gradedCount: graded.length, topics: [...subjects.entries()].map(([subject, value]) => ({ subject: subject.length > 15 ? subject.slice(0, 15) + "…" : subject, mastery: Math.round(value.total / value.count) })).sort((a,b) => b.mastery - a.mastery) };
+  }, [allRows]);
   const rows = useMemo(() => {
     const term = search.trim().toLocaleLowerCase();
     return allRows.filter(row => {
@@ -133,6 +146,16 @@ export default function TeacherGradingStudio({ tests, userId }: Props) {
   };
   return <section className="teacher-submissions">
     <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / GRADING COMMAND</span><h2>Grading studio<span className="heading-period">.</span></h2><p>Review student scripts, audit exam integrity events, and record evidence-based marks.</p></div><div className="directory-header-actions"><div className="student-count"><ClipboardList size={18}/><strong>{allRows.length}</strong><span>submissions</span></div><button className="secondary-btn" onClick={exportSubmissions} disabled={!rows.length}><Download size={15}/> Export CSV</button></div></div>
+    <motion.div className="grading-command-metrics" initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:.3,staggerChildren:.06}}>
+      <div className="grading-command-metric"><span>SUBMISSIONS</span><strong>{allRows.length.toString().padStart(2,"0")}</strong><small>Attempts received</small></div>
+      <div className="grading-command-metric"><span>MARKED</span><strong>{performance.gradedCount.toString().padStart(2,"0")}</strong><small>Teacher-reviewed</small></div>
+      <div className="grading-command-metric"><span>CLASS AVERAGE</span><strong>{performance.average === null ? "—" : performance.average + "%"}</strong><small>{performance.average === null ? "Awaiting grades" : "Across graded attempts"}</small></div>
+      <div className="grading-command-metric"><span>SECURITY FLAGS</span><strong>{Object.values(integrityCounts).reduce((sum,item)=>sum+item.count,0).toString().padStart(2,"0")}</strong><small>Browser integrity events</small></div>
+    </motion.div>
+    <div className="grading-chart-grid">
+      <section className="grading-chart-panel"><div className="grading-chart-heading"><div><span className="panel-kicker">PERFORMANCE INTELLIGENCE</span><h3>Class average</h3></div><span className="chart-live-dot">GRADE DATA</span></div>{allRows.some(row=>row.grade) ? <div className="grading-chart"><ResponsiveContainer width="100%" height="100%"><LineChart data={allRows.filter(row=>row.grade).slice(0,12).reverse().map((row,index)=>({attempt:String(index+1).padStart(2,"0"),average:Math.round((row.grade!.score/(row.test?.totalMarks??100))*100)}))}><CartesianGrid stroke="rgba(220,230,242,.07)" vertical={false}/><XAxis dataKey="attempt" tick={{fill:"rgba(220,230,242,.45)",fontSize:9}} axisLine={false} tickLine={false}/><YAxis domain={[0,100]} tick={{fill:"rgba(220,230,242,.45)",fontSize:9}} axisLine={false} tickLine={false} tickFormatter={value=>value+"%"}/><Tooltip contentStyle={{background:"#080b12",border:"1px solid rgba(0,207,255,.2)",borderRadius:9,color:"#f5faff"}} formatter={value=>[value+"%","Score"]}/><Line type="monotone" dataKey="average" stroke="#00CFFF" strokeWidth={2.5} dot={{r:3,fill:"#0066FF",stroke:"#00CFFF",strokeWidth:1}} activeDot={{r:5}} animationDuration={700}/></LineChart></ResponsiveContainer></div> : <p className="grading-chart-empty">Class averages appear after a teacher records grades.</p>}</section>
+      <section className="grading-chart-panel"><div className="grading-chart-heading"><div><span className="panel-kicker">TOPIC INSIGHTS</span><h3>Topic mastery</h3></div><span className="chart-live-dot">BY SUBJECT</span></div>{performance.topics.length ? <div className="grading-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={performance.topics} layout="vertical" margin={{left:4,right:12,top:4,bottom:0}}><CartesianGrid stroke="rgba(220,230,242,.07)" horizontal={false}/><XAxis type="number" domain={[0,100]} tick={{fill:"rgba(220,230,242,.45)",fontSize:9}} axisLine={false} tickLine={false} tickFormatter={value=>value+"%"}/><YAxis type="category" dataKey="subject" width={82} tick={{fill:"rgba(220,230,242,.7)",fontSize:10}} axisLine={false} tickLine={false}/><Tooltip contentStyle={{background:"#080b12",border:"1px solid rgba(0,207,255,.2)",borderRadius:9,color:"#f5faff"}} formatter={value=>[value+"%","Average score"]}/><Bar dataKey="mastery" fill="#0066FF" radius={[0,5,5,0]} animationDuration={800}/></BarChart></ResponsiveContainer></div> : <p className="grading-chart-empty">Topic insights appear when graded assessments are assigned a subject.</p>}<small className="grading-chart-footnote">Subject averages are a proxy from assessment grades, not per-question mastery.</small></section>
+    </div>
     <div className="student-preview-banner"><MessageSquareText size={18}/><div><strong>{supabase ? "Shared review studio" : "Local review preview"}</strong><p>{supabase ? "Submitted answers and teacher grades are synced through your authenticated Supabase workspace." : "This preview only sees attempts stored in this browser. Connect Supabase for shared grading."}</p></div></div>
     {notice && <div className="notice"><CheckCircle2 size={15}/><span>{notice}</span></div>}
     {allRows.length > 0 && <div className="grading-score-strip"><div><span className="panel-kicker">GRADING SNAPSHOT</span><strong>{allRows.filter(row => row.grade).length} / {allRows.length} graded</strong><small>Score distribution across submitted attempts</small></div><div className="grading-mini-chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={allRows.slice(0,12).reverse().map((row,index)=>({label:String(index+1),score:row.grade?.score ?? 0}))}><XAxis dataKey="label" hide/><Tooltip cursor={{fill:"rgba(0,207,255,.08)"}} contentStyle={{background:"#080b12",border:"1px solid rgba(0,207,255,.22)",borderRadius:10,color:"#f5faff"}}/><Bar dataKey="score" fill="#0066FF" radius={[4,4,0,0]}/></BarChart></ResponsiveContainer></div></div>}
