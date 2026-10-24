@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Download, GraduationCap, KeyRound, Mail, Plus, Search, ShieldCheck, Trash2, Users, X } from "lucide-react";
+import { Copy, Download, GraduationCap, KeyRound, Plus, Search, ShieldCheck, Trash2, Users, X } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
 type Student = { id: string; name: string; email: string; className: string; addedAt: number; studentId?: string };
