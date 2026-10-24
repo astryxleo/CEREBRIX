@@ -10,6 +10,7 @@ import TeacherAnalytics from "./TeacherAnalytics";
 import TeacherTests from "./TeacherTests";
 import StudentDirectory from "./StudentDirectory";
 import StudentAnalytics from "./StudentAnalytics";
+import CustomCursor from "./CustomCursor";
 import { supabase } from "./lib/supabase";
 import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X, BarChart3 } from "lucide-react";
 
@@ -90,7 +91,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
   return()=>{alive=false;};
  },[user.id,role]);
  if (role === "Student" && location.pathname === "/terminated") return <main className="fortress-terminated"><motion.div className="fortress-terminated-card" initial={{opacity:0,y:18,scale:.98}} animate={{opacity:1,y:0,scale:1}}><div className="fortress-terminated-icon"><ShieldCheck size={30}/></div><span className="panel-kicker">CEREBRIX / FORTRESS SECURITY</span><h1>EXAM TERMINATED<span>.</span></h1><p>The assessment was automatically submitted after three recorded integrity warnings. Browser signals can be imperfect; contact your teacher if you believe this was a mistake.</p><div className="fortress-terminated-status"><Check size={15}/> Submission status recorded</div><button className="primary-btn" onClick={()=>navigate("/",{replace:true})}>Return to student portal <ArrowRight size={15}/></button></motion.div></main>;
- return <div className="app-shell">
+ return <div className="app-shell"><CustomCursor />
   <aside className={`sidebar ${mobileNav?"sidebar-open":""}`}>
    <div className="side-top"><Brand/><button className="icon-btn mobile-close" onClick={()=>setMobileNav(false)} aria-label="Close menu"><X size={18}/></button></div>
    <div className="workspace"><div className="workspace-avatar">CS</div><div className="workspace-copy"><strong>Computer Science</strong><span>School workspace</span></div><ChevronDown size={15}/></div>
