@@ -4,8 +4,20 @@ import { Download, GraduationCap, Mail, Plus, Search, Trash2, Users, X } from "l
 type Student = { id: string; name: string; email: string; className: string; addedAt: number };
 const storageKey = "cerebrix.teacher.students.v1";
 function readStudents(): Student[] {
-  try { const value = JSON.parse(localStorage.getItem(storageKey) || "[]"); return Array.isArray(value) ? value : []; }
-  catch { return []; }
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    if (!Array.isArray(value)) return [];
+    return value.filter((item): item is Student => {
+      if (!item || typeof item !== "object") return false;
+      const student = item as Partial<Student>;
+      return typeof student.id === "string"
+        && typeof student.name === "string"
+        && typeof student.email === "string"
+        && typeof student.className === "string"
+        && typeof student.addedAt === "number"
+        && Number.isFinite(student.addedAt);
+    });
+  } catch { return []; }
 }
 export default function StudentDirectory() {
   const [students, setStudents] = useState<Student[]>(readStudents);
