@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, Award, BarChart3, CheckCircle2, Clock3, FileCode2, TrendingUp, Users } from "lucide-react";
 import type { BuilderTest } from "./TestBuilder";
+import { supabase } from "./lib/supabase";
 
-type Attempt = { testName: string; startedAt: number; answers: Record<string, string>; submittedAt?: number };
+type Attempt = { testName: string; assessmentId?: string; startedAt: number; answers: Record<string, string>; submittedAt?: number };
 type Grade = { score: number; feedback: string; gradedAt: number };
-type Props = { tests: BuilderTest[] };
+type Props = { tests: BuilderTest[]; userId: string };
 function readAttempts(): Record<string, Attempt> {
   try {
     const value: unknown = JSON.parse(localStorage.getItem("cerebrix.student.attempts.v1") || "{}");
@@ -37,9 +38,41 @@ function readGrades(): Record<string, Grade> {
     })) as Record<string, Grade>;
   } catch { return {}; }
 }
-export default function TeacherAnalytics({ tests }: Props) {
-  const attempts = useMemo(() => readAttempts(), []);
-  const grades = useMemo(() => readGrades(), []);
+export default function TeacherAnalytics({ tests, userId }: Props) {
+  const [remoteAttempts, setRemoteAttempts] = useState<Record<string, Attempt>>({});
+  const [remoteGrades, setRemoteGrades] = useState<Record<string, Grade>>({});
+  const [remoteLoaded, setRemoteLoaded] = useState(!supabase);
+  const [notice, setNotice] = useState("");
+  useEffect(() => {
+    if (!supabase) { setRemoteLoaded(true); return; }
+    let alive = true;
+    const load = async () => {
+      const { data, error } = await supabase!.from("assessment_submissions")
+        .select("id,assessment_id,started_at,submitted_at,status,assessment_grades(score,feedback,graded_at)")
+        .eq("status", "submitted");
+      if (!alive) return;
+      if (error) { setNotice("Shared analytics could not load. Check Teacher access and database policies."); setRemoteLoaded(true); return; }
+      const nextAttempts: Record<string, Attempt> = {};
+      const nextGrades: Record<string, Grade> = {};
+      for (const row of data ?? []) {
+        const testName = tests.find(test => test.id === row.assessment_id)?.name ?? "Assessment";
+        nextAttempts[row.id] = {
+          testName, assessmentId: row.assessment_id, startedAt: new Date(row.started_at).getTime(),
+          answers: {}, submittedAt: row.submitted_at ? new Date(row.submitted_at).getTime() : undefined,
+        };
+        const raw = row.assessment_grades;
+        const grade = Array.isArray(raw) ? raw[0] : raw;
+        if (grade) nextGrades[row.id] = { score: Number(grade.score), feedback: grade.feedback ?? "", gradedAt: new Date(grade.graded_at).getTime() };
+      }
+      setRemoteAttempts(nextAttempts);
+      setRemoteGrades(nextGrades);
+      setRemoteLoaded(true);
+    };
+    void load();
+    return () => { alive = false; };
+  }, [userId, tests]);
+  const attempts = useMemo(() => supabase ? remoteAttempts : readAttempts(), [remoteAttempts]);
+  const grades = useMemo(() => supabase ? remoteGrades : readGrades(), [remoteGrades]);
   const submitted = Object.entries(attempts).filter(([, attempt]) => Boolean(attempt.submittedAt));
   const graded = submitted.filter(([key]) => grades[key]);
   const average = graded.length ? Math.round(graded.reduce((sum, [key]) => sum + (maxPossible(key) ? grades[key].score / maxPossible(key) * 100 : 0), 0) / graded.length) : null;
@@ -52,7 +85,8 @@ export default function TeacherAnalytics({ tests }: Props) {
   }).filter(row => row.count || row.test.status === "Scheduled" || row.test.status === "Draft");
   return <section className="analytics-workspace">
     <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / PERFORMANCE INTELLIGENCE</span><h2>Class analytics<span className="heading-period">.</span></h2><p>A quick read on submitted work, grading progress, and assessment outcomes.</p></div><div className="student-count"><Activity size={18}/><strong>{graded.length}</strong><span>graded attempts</span></div></div>
-    <div className="student-preview-banner"><Activity size={18}/><div><strong>Local analytics preview</strong><p>Metrics are calculated from this browser’s saved assessments, submissions, and grades. They are not school-wide or synced across devices.</p></div></div>
+    {notice && <div className="notice"><Activity size={16}/><span>{notice}</span></div>}
+    <div className="student-preview-banner"><Activity size={18}/><div><strong>{supabase ? "Shared analytics" : "Local analytics preview"}</strong><p>{supabase ? "Metrics use submissions and grades from your authenticated workspace." : "Metrics are calculated from this browser’s saved assessments, submissions, and grades."}</p></div></div>
     <div className="analytics-metrics">
       <article className="analytics-metric"><span><FileCode2 size={17}/> Assessments</span><strong>{tests.length}</strong><small>Saved in this browser</small></article>
       <article className="analytics-metric"><span><Users size={17}/> Submitted</span><strong>{submitted.length}</strong><small>Completed attempts</small></article>
