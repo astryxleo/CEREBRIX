@@ -41,8 +41,6 @@ export function useAntiCheating({
       if (document.hidden) {
         warn("tab-hidden");
         if (blackoutOnBlur) setIsBlackout(true);
-      } else {
-        setIsBlackout(false);
       }
     };
     const handleFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
@@ -94,5 +92,10 @@ export function useAntiCheating({
     };
   }, [enabled, blackoutOnBlur, restrictClipboard, warn]);
 
-  return { isBlackout, warnings, isFullscreen, enterFullscreen };
+  const resumeExam = useCallback(async () => {
+    await enterFullscreen();
+    setIsBlackout(false);
+  }, [enterFullscreen]);
+
+  return { isBlackout, warnings, isFullscreen, enterFullscreen, resumeExam };
 }
