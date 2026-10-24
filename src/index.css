@@ -316,3 +316,15 @@ body.cerebrix-custom-cursor,body.cerebrix-custom-cursor *{cursor:none!important}
 body.cerebrix-custom-cursor a,body.cerebrix-custom-cursor button,body.cerebrix-custom-cursor [role="button"]{cursor:none!important}
 @media(hover:none),(pointer:coarse){.cerebrix-cursor{display:none!important}body.cerebrix-custom-cursor,body.cerebrix-custom-cursor *{cursor:auto!important}}
 @media(prefers-reduced-motion:reduce){.cerebrix-cursor,.cerebrix-cursor-pulse{transition:none!important}}
+
+
+/* User-selected CEREBRIX cursor: native browser cursor, forced across the UI. */
+html.cerebrix-force-cursor,
+html.cerebrix-force-cursor body,
+html.cerebrix-force-cursor body *,
+html.cerebrix-force-cursor body *::before,
+html.cerebrix-force-cursor body *::after {
+  cursor: url("https://raw.githubusercontent.com/astryxleo/CEREBRIX/main/cursor%20(20).png") 0 0, auto !important;
+}
+/* Do not draw the old simulated overlay on top of the actual PNG cursor. */
+html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
