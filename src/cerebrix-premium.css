@@ -79,3 +79,12 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .teacher-reference-answer { margin:10px 0 18px; padding:12px 14px; border:1px dashed rgba(0,207,255,.2); border-radius:10px; background:rgba(0,207,255,.025); }
 .teacher-reference-answer>span { color:#00cfff; font:9px "JetBrains Mono",monospace; letter-spacing:.08em; }
 .teacher-reference-answer pre { margin:10px 0 0; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; color:rgba(220,230,242,.75); font:12px/1.7 "JetBrains Mono",monospace; }
+
+.analytics-chart-panel { margin:18px 0; padding:20px; border:1px solid rgba(220,230,242,.1); border-radius:16px; background:linear-gradient(145deg,rgba(17,19,27,.88),rgba(4,7,12,.95)); box-shadow:0 18px 55px rgba(0,0,0,.24); }
+.analytics-chart-panel .panel-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
+.analytics-chart-panel .panel-header h2 { margin:7px 0 5px; color:#f5faff; font-size:18px; }
+.analytics-chart-panel .panel-header p { margin:0; color:rgba(220,230,242,.55); font-size:11px; }
+.analytics-chart { height:220px; width:100%; margin-top:14px; }
+.chart-legend { display:flex; align-items:center; gap:7px; white-space:nowrap; color:rgba(220,230,242,.5); font:9px "JetBrains Mono",monospace; letter-spacing:.08em; }
+.chart-legend span { width:7px; height:7px; border-radius:50%; background:#0066ff; box-shadow:0 0 10px rgba(0,102,255,.8); }
+@media(max-width:600px) { .analytics-chart-panel { padding:15px; } .analytics-chart { height:190px; } .analytics-chart-panel .panel-header { flex-direction:column; } }
