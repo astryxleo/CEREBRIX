@@ -13,7 +13,7 @@ import StudentAnalytics from "./StudentAnalytics";
 import Leaderboard from "./Leaderboard";
 import CustomCursor from "./CustomCursor";
 import { supabase } from "./lib/supabase";
-import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X, BarChart3, Trophy } from "lucide-react";
+import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, LogOut, Sparkles, Terminal, Users, X, BarChart3, Trophy } from "lucide-react";
 
 type Tab = "Overview" | "Tests" | "Submissions" | "Students" | "Analytics" | "My analytics" | "Question Bank" | "Code Sandbox" | "Leaderboard";
 const nav: {label: Tab; icon: typeof LayoutDashboard}[] = [
@@ -34,6 +34,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
  const [selectedTest,setSelectedTest]=useState<BuilderTest|null>(null);
  const [createdTests,setCreatedTests]=useState<BuilderTest[]>(()=>{try{const saved=localStorage.getItem("cerebrix.teacher.tests.v1");return saved?JSON.parse(saved) as BuilderTest[]:[]}catch{return []}});
  const [mobileNav,setMobileNav]=useState(false);
+ const [profileMenuOpen,setProfileMenuOpen]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
  useEffect(()=>{if(role==="Student"&&location.pathname!=="/"&&location.pathname!=="/my-analytics"&&location.pathname!=="/leaderboard"&&location.pathname!=="/terminated"){navigate("/",{replace:true});return;}setActive(pathTabs[location.pathname]??"Overview");setShowCreate(role==="Teacher"&&location.pathname==="/builder");},[location.pathname,role,navigate]);
@@ -103,7 +104,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
    <button className={`nav-item nav-coming-soon ${active==="Code Sandbox"?"active":""}`} onClick={()=>{goTo("Code Sandbox");setMobileNav(false)}}><FlaskConical size={17}/><span>Code Sandbox</span><span className="soon">COMING SOON</span></button></>}
    <div className="sidebar-bottom">
     <div className="security-card"><div className="security-icon"><ShieldCheck size={17}/></div><div><strong>Assessment integrity</strong><p>Built for focused, fair exams.</p></div><span className="status-dot"/></div>
-    <button className="profile" onClick={()=>void signOut()} title="Sign out"><div className="profile-avatar">{(profile.display_name || user.email || "C").slice(0,1).toUpperCase()}</div><div className="profile-copy"><strong>{profile.display_name || user.email || "CEREBRIX user"}</strong><span>{role} account · Sign out</span></div><MoreHorizontal size={18}/></button>
+    <div className="profile-menu-wrap"><button className={`profile ${profileMenuOpen?"profile-open":""}`} onClick={()=>setProfileMenuOpen(open=>!open)} aria-expanded={profileMenuOpen} aria-haspopup="menu" title="Open account menu"><div className="profile-avatar">{(profile.display_name || user.email || "C").slice(0,1).toUpperCase()}</div><div className="profile-copy"><strong>{profile.display_name || user.email || "CEREBRIX user"}</strong><span>{role} account · Account menu</span></div><MoreHorizontal size={18}/></button>{profileMenuOpen&&<div className="profile-menu" role="menu"><div className="profile-menu-heading"><span>SIGNED IN AS</span><strong>{profile.display_name || user.email || "CEREBRIX user"}</strong></div><button type="button" role="menuitem" onClick={()=>{setProfileMenuOpen(false);void signOut();}}><LogOut size={15}/> Sign out</button></div>}</div>
    </div>
   </aside>
   {mobileNav&&<button className="scrim" onClick={()=>setMobileNav(false)} aria-label="Close navigation"/>}
