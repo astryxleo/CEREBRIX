@@ -36,14 +36,20 @@ create table if not exists public.assessment_questions (
   marks numeric(8,2) not null default 5 check (marks > 0),
   starter_content text not null default '',
   dataset text not null default '',
-  -- Reference answers are only readable by the owning teacher, never by students.
-  reference_answer text not null default '',
   created_at timestamptz not null default now(),
   unique (assessment_id, position)
 );
 
 create index if not exists assessment_questions_assessment_idx
   on public.assessment_questions (assessment_id, position);
+
+-- Keep answer keys in a separate table: RLS is row-level and cannot hide a column
+-- from students who are allowed to read the corresponding question row.
+create table if not exists public.assessment_question_keys (
+  question_id uuid primary key references public.assessment_questions(id) on delete cascade,
+  reference_answer text not null default '',
+  updated_at timestamptz not null default now()
+);
 
 create table if not exists public.assessment_submissions (
   id uuid primary key default gen_random_uuid(),
@@ -77,6 +83,7 @@ create table if not exists public.assessment_grades (
 
 alter table public.assessments enable row level security;
 alter table public.assessment_questions enable row level security;
+alter table public.assessment_question_keys enable row level security;
 alter table public.assessment_submissions enable row level security;
 alter table public.assessment_grades enable row level security;
 
@@ -111,7 +118,7 @@ create policy "Teachers manage their assessment questions"
   ));
 
 -- Students see question prompts only while the parent assessment is available.
--- Reference answers are intentionally excluded from the student-facing view below.
+-- Reference answers are stored separately in assessment_question_keys.
 drop policy if exists "Students read available question prompts" on public.assessment_questions;
 create policy "Students read available question prompts"
   on public.assessment_questions for select to authenticated
@@ -121,6 +128,22 @@ create policy "Students read available question prompts"
       and a.status in ('scheduled', 'published')
       and (a.opens_at is null or a.opens_at <= now())
       and (a.closes_at is null or a.closes_at > now())
+  ));
+
+drop policy if exists "Teachers manage answer keys for their assessments" on public.assessment_question_keys;
+create policy "Teachers manage answer keys for their assessments"
+  on public.assessment_question_keys for all to authenticated
+  using (exists (
+    select 1
+    from public.assessment_questions q
+    join public.assessments a on a.id = q.assessment_id
+    where q.id = question_id and a.teacher_id = (select auth.uid())
+  ))
+  with check (exists (
+    select 1
+    from public.assessment_questions q
+    join public.assessments a on a.id = q.assessment_id
+    where q.id = question_id and a.teacher_id = (select auth.uid())
   ));
 
 -- Submissions are visible to their student and to the assessment's owning teacher.
