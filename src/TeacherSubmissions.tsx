@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CheckCircle2, ClipboardList, Download, FileCode2, MessageSquareText, Save } from "lucide-react";
+import { CheckCircle2, ClipboardList, Download, FileCode2, MessageSquareText, Save, Search } from "lucide-react";
 import type { BuilderTest } from "./TestBuilder";
 
 type Attempt = { testName: string; startedAt: number; answers: Record<string, string>; submittedAt?: number };
@@ -18,7 +18,17 @@ export default function TeacherSubmissions({ tests }: Props) {
   const [score, setScore] = useState("0");
   const [feedback, setFeedback] = useState("");
   const [notice, setNotice] = useState("");
-  const rows = useMemo(() => Object.entries(attempts).filter(([, a]) => Boolean(a.submittedAt)).map(([name, a]) => ({ name, attempt: a, test: tests.find(t => t.name === a.testName), grade: grades[name] })).sort((a,b) => (b.attempt.submittedAt || 0) - (a.attempt.submittedAt || 0)), [attempts, tests, grades]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "graded" | "ungraded">("all");
+  const allRows = useMemo(() => Object.entries(attempts).filter(([, a]) => Boolean(a.submittedAt)).map(([name, a]) => ({ name, attempt: a, test: tests.find(t => t.name === a.testName), grade: grades[name] })).sort((a,b) => (b.attempt.submittedAt || 0) - (a.attempt.submittedAt || 0)), [attempts, tests, grades]);
+  const rows = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase();
+    return allRows.filter(row => {
+      const matchesSearch = !term || row.attempt.testName.toLocaleLowerCase().includes(term) || row.name.toLocaleLowerCase().includes(term) || row.grade?.feedback.toLocaleLowerCase().includes(term);
+      const matchesStatus = statusFilter === "all" || (statusFilter === "graded" ? Boolean(row.grade) : !row.grade);
+      return matchesSearch && matchesStatus;
+    });
+  }, [allRows, search, statusFilter]);
   const active = rows.find(r => r.name === selected);
   const exportSubmissions = () => {
     const quote = (value: unknown) => '"' + String(value ?? "").replace(/"/g, '""') + '"';
@@ -39,7 +49,7 @@ export default function TeacherSubmissions({ tests }: Props) {
     const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" }));
     const link = document.createElement("a");
     link.href = url; link.download = "cerebrix-submissions.csv"; link.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   const startGrade = (name: string, current?: Grade) => { setSelected(name); setScore(String(current?.score ?? 0)); setFeedback(current?.feedback ?? ""); setNotice(""); };
   const saveGrade = () => {
@@ -53,10 +63,11 @@ export default function TeacherSubmissions({ tests }: Props) {
     catch { setNotice("Browser storage is unavailable; this grade could not be saved."); }
   };
   return <section className="teacher-submissions">
-    <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / REVIEW DESK</span><h2>Submission inbox<span className="heading-period">.</span></h2><p>Inspect submitted answers, leave feedback, and record marks.</p></div><div className="directory-header-actions"><div className="student-count"><ClipboardList size={18}/><strong>{rows.length}</strong><span>submissions</span></div><button className="secondary-btn" onClick={exportSubmissions} disabled={!rows.length}><Download size={15}/> Export CSV</button></div></div>
+    <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / REVIEW DESK</span><h2>Submission inbox<span className="heading-period">.</span></h2><p>Inspect submitted answers, leave feedback, and record marks.</p></div><div className="directory-header-actions"><div className="student-count"><ClipboardList size={18}/><strong>{allRows.length}</strong><span>submissions</span></div><button className="secondary-btn" onClick={exportSubmissions} disabled={!rows.length}><Download size={15}/> Export CSV</button></div></div>
     <div className="student-preview-banner"><MessageSquareText size={18}/><div><strong>Local review mode</strong><p>This inbox can only see attempts stored in this same browser. Grades and feedback are not sent to students or a server.</p></div></div>
     {notice && <div className="notice"><CheckCircle2 size={15}/><span>{notice}</span></div>}
-    {rows.length === 0 ? <div className="student-empty"><div className="student-empty-icon"><FileCode2 size={25}/></div><h3>No submitted attempts yet</h3><p>Switch to Student preview, start a scheduled assessment and submit it on this device to see it appear here.</p></div> : <div className="submission-layout">
+    {allRows.length > 0 && <div className="tests-toolbar submissions-toolbar"><label className="tests-search"><Search size={16}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search assessment, submission key, feedback…" aria-label="Search submissions"/></label><div className="tests-filters" aria-label="Filter submissions">{([["all","All",allRows.length],["ungraded","Ungraded",allRows.filter(row => !row.grade).length],["graded","Graded",allRows.filter(row => Boolean(row.grade)).length]] as const).map(([value,label,count]) => <button key={value} type="button" className={statusFilter === value ? "active" : ""} onClick={() => setStatusFilter(value)}>{label}<span>{count}</span></button>)}</div></div>}
+    {rows.length === 0 ? <div className="student-empty"><div className="student-empty-icon"><FileCode2 size={25}/></div><h3>{allRows.length ? "No matching submissions" : "No submitted attempts yet"}</h3><p>{allRows.length ? "Try another search or switch the grading filter." : "Switch to Student preview, start a scheduled assessment and submit it on this device to see it appear here."}</p></div> : <div className="submission-layout">
       <div className="submission-list">{rows.map(row => <button className={selected === row.name ? "submission-row selected" : "submission-row"} key={row.name} onClick={() => startGrade(row.name, row.grade)}><span className="submission-row-icon"><FileCode2 size={16}/></span><span className="submission-row-copy"><strong>{row.attempt.testName}</strong><small>Submitted {new Date(row.attempt.submittedAt || 0).toLocaleString()}</small><small>{Object.values(row.attempt.answers).filter(v => v.trim()).length} answers recorded</small></span><span className={row.grade ? "student-state done" : "student-state"}>{row.grade ? `${row.grade.score} marks` : "Ungraded"}</span></button>)}</div>
       {active ? <article className="submission-detail"><div className="submission-detail-head"><div><span className="panel-kicker">SUBMISSION REVIEW</span><h3>{active.attempt.testName}</h3></div><span className="submission-max">{active.test?.totalMarks ?? 100} max marks</span></div>
         {(active.test?.questions || []).map((q, i) => <section className="submission-answer" key={q.id}><div className="submission-answer-head"><strong>Q{ i + 1 }. {q.title.trim() || `Question ${i + 1}`}</strong><span>{q.marks} marks</span></div><p>{q.prompt}</p><pre>{active.attempt.answers[String(q.id)]?.trim() || "No answer provided."}</pre></section>)}
