@@ -6,6 +6,7 @@ import TeacherSubmissions from "./TeacherSubmissions";
 import TeacherAnalytics from "./TeacherAnalytics";
 import TeacherTests from "./TeacherTests";
 import StudentDirectory from "./StudentDirectory";
+import { supabase } from "./lib/supabase";
 import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, Gauge, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X } from "lucide-react";
 
 type Tab = "Overview" | "Tests" | "Submissions" | "Students" | "Analytics";
@@ -18,7 +19,7 @@ const tests = [
   {name:"File Handling Practical",subject:"CSV · TXT · Binary files",status:"Grading",date:"Oct 22, 10:00 AM",students:"30 / 30",progress:74,accent:"white"}
 ];
 function Brand(){return <div className="brand"><div className="brand-mark"><img src="/cerebrix.png" alt="" /></div><div><strong>CEREBRIX</strong><span>THINK. CODE. PROVE.</span></div></div>}
-function App({ user, profile, signOut }: { user: { email?: string }; profile: { display_name: string; role: "student" | "teacher" }; signOut: () => Promise<void> }){
+function App({ user, profile, signOut }: { user: { id: string; email?: string }; profile: { display_name: string; role: "student" | "teacher" }; signOut: () => Promise<void> }){
  const [active,setActive]=useState<Tab>("Overview");
  const role = profile.role === "teacher" ? "Teacher" : "Student";
  const [showCreate,setShowCreate]=useState(false);
@@ -30,6 +31,29 @@ function App({ user, profile, signOut }: { user: { email?: string }; profile: { 
  const allTests=[...createdTests,...tests];
  const filtered=allTests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
  useEffect(()=>{try{localStorage.setItem("cerebrix.teacher.tests.v1",JSON.stringify(createdTests));}catch{/* Browser storage may be unavailable. */}},[createdTests]);
+ useEffect(()=>{
+  if(!supabase)return;
+  let alive=true;
+  const loadAssessments=async()=>{
+   const {data,error}=await supabase!.from("assessments").select("id,title,subject,instructions,duration_minutes,opens_at,closes_at,status,assessment_questions(id,position,kind,title,prompt,marks,starter_content,dataset,assessment_question_keys(reference_answer))").order("created_at",{ascending:false});
+   if(!alive)return;
+   if(error){setNotice("Could not load shared assessments. Check database access and your role.");return;}
+   const mapped=(data??[]).map((row:any):BuilderTest=>{
+    const questions=[...(row.assessment_questions??[])].sort((a:any,b:any)=>a.position-b.position);
+    return {
+     name:row.title,subject:row.subject,status:row.status==="scheduled"||row.status==="published"?"Scheduled":"Draft",
+     date:row.opens_at?new Date(row.opens_at).toLocaleString():"Not scheduled",students:"—",progress:0,accent:"blue",
+     totalMarks:questions.reduce((sum:number,q:any)=>sum+Number(q.marks||0),0),
+     duration:row.duration_minutes,scheduledAt:row.opens_at??"",deadline:row.closes_at??"",instructions:row.instructions??"",
+     questionCount:questions.length,
+     questions:questions.map((q:any,index:number)=>({id:index+1,kind:q.kind,title:q.title??"",prompt:q.prompt,marks:Number(q.marks||5),referenceAnswer:Array.isArray(q.assessment_question_keys)?(q.assessment_question_keys[0]?.reference_answer??""):(q.assessment_question_keys?.reference_answer??""),dataset:q.dataset??""}))
+    };
+   });
+   setCreatedTests(mapped);
+  };
+  void loadAssessments();
+  return()=>{alive=false;};
+ },[user.id,role]);
  return <div className="app-shell">
   <aside className={`sidebar ${mobileNav?"sidebar-open":""}`}>
    <div className="side-top"><Brand/><button className="icon-btn mobile-close" onClick={()=>setMobileNav(false)} aria-label="Close menu"><X size={18}/></button></div>
@@ -78,7 +102,33 @@ function App({ user, profile, signOut }: { user: { email?: string }; profile: { 
    </div>
   </main>
   {selectedTest&&<TestDetails test={selectedTest} onClose={()=>setSelectedTest(null)} onDelete={test=>{setCreatedTests(current=>current.filter(item=>!(item.name===test.name&&item.scheduledAt===test.scheduledAt)));setSelectedTest(null);setNotice(`“${test.name}” was deleted from this browser.`);}}/>}
-  {showCreate&&<TestBuilder onClose={()=>setShowCreate(false)} onSave={test=>{setCreatedTests(current=>[test,...current]);setNotice(test.status==="Scheduled"?`“${test.name}” scheduled in this session with ${test.totalMarks} marks and ${test.questionCount} questions.`:`“${test.name}” saved as a draft in this session.`);setActive("Tests");}}/>}
+  {showCreate&&<TestBuilder onClose={()=>setShowCreate(false)} onSave={async test=>{
+   if(!supabase){setNotice("Supabase is not configured.");return;}
+   const {data:assessment,error:assessmentError}=await supabase.from("assessments").insert({
+    teacher_id:user.id,title:test.name,subject:test.subject,instructions:test.instructions,duration_minutes:test.duration,
+    opens_at:test.status==="Scheduled"&&test.scheduledAt?new Date(test.scheduledAt).toISOString():null,
+    closes_at:test.deadline?new Date(test.deadline).toISOString():null,status:test.status==="Scheduled"?"scheduled":"draft"
+   }).select("id").single();
+   if(assessmentError||!assessment){setNotice("Assessment could not be saved to the shared database. Check that your account has the Teacher role.");return;}
+   const questions=test.questions.filter(question=>question.prompt.trim()).map((question,index)=>({
+    assessment_id:assessment.id,position:index+1,kind:question.kind,title:question.title,prompt:question.prompt,marks:question.marks,starter_content:"",dataset:question.dataset
+   }));
+   if(questions.length){
+    const {data:createdQuestions,error:questionError}=await supabase.from("assessment_questions").insert(questions).select("id,position");
+    if(questionError||!createdQuestions){await supabase.from("assessments").delete().eq("id",assessment.id);setNotice("Questions could not be saved. No partial assessment was kept.");return;}
+    const keys=createdQuestions.map(question=>({question_id:question.id,reference_answer:test.questions.filter(item=>item.prompt.trim())[question.position-1]?.referenceAnswer??""}));
+    if(keys.some(key=>key.reference_answer)){
+     const {error:keyError}=await supabase.from("assessment_question_keys").insert(keys.filter(key=>key.reference_answer));
+     if(keyError){await supabase.from("assessments").delete().eq("id",assessment.id);setNotice("Answer keys could not be saved. No partial assessment was kept.");return;}
+    }
+   }
+   setShowCreate(false);setNotice(`“${test.name}” saved to your shared workspace.`);setActive("Tests");
+   const {data:latest}=await supabase.from("assessments").select("id,title,subject,instructions,duration_minutes,opens_at,closes_at,status,assessment_questions(id,position,kind,title,prompt,marks,starter_content,dataset,assessment_question_keys(reference_answer))").eq("id",assessment.id).single();
+   if(latest){
+    const qs=[...(latest.assessment_questions??[])].sort((a:any,b:any)=>a.position-b.position);
+    setCreatedTests(current=>[{...test,name:latest.title,subject:latest.subject,status:latest.status==="scheduled"||latest.status==="published"?"Scheduled":"Draft",scheduledAt:latest.opens_at??"",deadline:latest.closes_at??"",duration:latest.duration_minutes,instructions:latest.instructions??"",questionCount:qs.length,totalMarks:qs.reduce((sum:number,q:any)=>sum+Number(q.marks||0),0),questions:qs.map((q:any,index:number)=>({id:index+1,kind:q.kind,title:q.title??"",prompt:q.prompt,marks:Number(q.marks||5),referenceAnswer:Array.isArray(q.assessment_question_keys)?(q.assessment_question_keys[0]?.reference_answer??""):(q.assessment_question_keys?.reference_answer??""),dataset:q.dataset??""}))},...current.filter(item=>item.name!==latest.title)]); 
+   }
+  }}/>
  </div>
 }
 export default App;
