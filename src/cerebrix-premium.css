@@ -51,3 +51,10 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .integrity-review-note>div { min-width:0; }
 .integrity-review-note strong { color:#f5faff; font-size:12px; }
 .integrity-review-note p { margin:5px 0 0; color:rgba(220,230,242,.58); font-size:11px; line-height:1.6; }
+
+.exam-question-nav button.review-marked { border-color:rgba(0,207,255,.5); background:rgba(0,207,255,.08); }
+.exam-question-nav button.review-marked.current { border-color:#00cfff; box-shadow:0 0 16px rgba(0,207,255,.16); }
+.exam-question-nav button i.review-marked { background:#00cfff; box-shadow:0 0 9px rgba(0,207,255,.75); }
+.review-flag-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 12px; border:1px solid rgba(0,207,255,.2); border-radius:9px; color:#dce6f2; background:rgba(0,207,255,.035); font-size:12px; transition:all .2s ease; }
+.review-flag-btn:hover,.review-flag-btn.active { color:#00cfff; border-color:rgba(0,207,255,.55); background:rgba(0,207,255,.1); box-shadow:0 0 16px rgba(0,207,255,.1); }
+.review-flag-btn:disabled { opacity:.45; cursor:not-allowed; }
