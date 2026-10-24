@@ -16,8 +16,8 @@ function read<T,>(key: string, fallback: T): T {
   catch { return fallback; }
 }
 export default function TeacherSubmissions({ tests, userId }: Props) {
-  const [attempts, setAttempts] = useState<Record<string, Attempt>>(() => read(attemptsKey, {}));
-  const [grades, setGrades] = useState<Record<string, Grade>>(() => read(gradesKey, {}));
+  const [attempts, setAttempts] = useState<Record<string, Attempt>>(() => supabase ? {} : read(attemptsKey, {}));
+  const [grades, setGrades] = useState<Record<string, Grade>>(() => supabase ? {} : read(gradesKey, {}));
   const [integrityCounts, setIntegrityCounts] = useState<Record<string, { count: number; latest?: string }>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState("0");
@@ -128,7 +128,7 @@ export default function TeacherSubmissions({ tests, userId }: Props) {
     }
     const next = { ...grades, [active.name]: grade };
     setGrades(next);
-    try { localStorage.setItem(gradesKey, JSON.stringify(next)); } catch { /* Shared grade is already saved if applicable. */ }
+    if (!supabase) { try { localStorage.setItem(gradesKey, JSON.stringify(next)); } catch { /* Browser storage may be unavailable. */ } }
   };
   return <section className="teacher-submissions">
     <div className="student-exam-header"><div><span className="panel-kicker">CEREBRIX / REVIEW DESK</span><h2>Submission inbox<span className="heading-period">.</span></h2><p>Inspect submitted answers, leave feedback, and record marks.</p></div><div className="directory-header-actions"><div className="student-count"><ClipboardList size={18}/><strong>{allRows.length}</strong><span>submissions</span></div><button className="secondary-btn" onClick={exportSubmissions} disabled={!rows.length}><Download size={15}/> Export CSV</button></div></div>
