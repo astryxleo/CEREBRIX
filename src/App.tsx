@@ -9,6 +9,7 @@ import OverviewTab from "./OverviewTab";
 import TeacherAnalytics from "./TeacherAnalytics";
 import TeacherTests from "./TeacherTests";
 import StudentDirectory from "./StudentDirectory";
+import StudentAnalytics from "./StudentAnalytics";
 import { supabase } from "./lib/supabase";
 import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X, BarChart3 } from "lucide-react";
 
@@ -44,9 +45,10 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
   if(!supabase||role!=="Teacher")return;
   let alive=true;
   const loadStats=async()=>{
-   const [{data:assessments,error:assessmentError},{data:submissions,error:submissionError}]=await Promise.all([
+   const [{data:assessments,error:assessmentError},{data:submissions,error:submissionError},{data:roster,error:rosterError}]=await Promise.all([
     supabase!.from("assessments").select("id,status"),
-    supabase!.from("assessment_submissions").select("id,student_id,assessment_id,assessment_grades(score)").eq("status","submitted")
+    supabase!.from("assessment_submissions").select("id,student_id,assessment_id,assessment_grades(score)").eq("status","submitted"),
+    supabase!.from("class_roster").select("id").eq("teacher_id",user.id)
    ]);
    if(!alive)return;
    if(assessmentError||submissionError){setNotice("Some dashboard metrics could not be loaded from the shared workspace.");return;}
@@ -56,7 +58,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
    const percentages=graded.map((item:any)=>Number(maxById.get(item.row.assessment_id)??100)>0?Number(item.grade.score)/Number(maxById.get(item.row.assessment_id)??100)*100:0);
    setDashboardStats({
     scheduled:(assessments??[]).filter((item:any)=>item.status==="scheduled"||item.status==="published").length,
-    participants:new Set(rows.map((row:any)=>row.student_id)).size,
+    participants:rosterError ? new Set(rows.map((row:any)=>row.student_id)).size : (roster??[]).length,
     pending:rows.length-graded.length,
     average:percentages.length?Math.round(percentages.reduce((sum:number,value:number)=>sum+value,0)/percentages.length):null
    });
@@ -108,7 +110,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
    <motion.div className="page" key={location.pathname} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:.24,ease:"easeOut"}}>
     {active !== "Overview" && <div className="welcome-row"><div className="welcome-copy"><div className="eyebrow"><span className="eyebrow-line"/> YOUR ASSESSMENT COMMAND CENTER</div><h1>{active}<span className="heading-period">.</span></h1><p className="page-sub">{active==="Tests"?"Create, schedule, and manage programming assessments.":active==="Submissions"?"Review student work and keep grading moving.":active==="Students"?"Track participation and individual student progress.":"Understand class performance at a glance."}</p></div><div className="welcome-actions">{role === "Teacher" && <button className="primary-btn" onClick={goToBuilder}><Plus size={17}/> Create test</button>}</div></div>}
     {notice==="__notifications__" ? <div className="notification-card"><div className="notification-card-head"><div><span className="panel-kicker">CEREBRIX / INBOX</span><h2>Notifications<span className="heading-period">.</span></h2></div><button className="icon-btn" onClick={()=>setNotice("")} aria-label="Close notifications"><X size={16}/></button></div><article className="notification-item"><span className="notification-item-icon"><Bell size={16}/></span><div><strong>{role==="Teacher"?"Workspace updates":"Assessment updates"}</strong><p>{role==="Teacher"?"Student accounts and class roster are managed from the Students tab. New submissions appear in Submissions.":"Your teacher-issued account is active. Published assessments will appear in My exams."}</p><small>WORKSPACE NOTICE</small></div></article><article className="notification-item"><span className="notification-item-icon cyan"><ShieldCheck size={16}/></span><div><strong>Security is enabled</strong><p>Use only the account credentials issued to you. Never share your password publicly.</p><small>ACCOUNT SECURITY</small></div></article></div> : notice&&<div className="notice"><Sparkles size={16}/><span>{notice}</span><button onClick={()=>setNotice("")} aria-label="Dismiss"><X size={15}/></button></div>}
-{role === "Student" && active === "My analytics" ? <TeacherAnalytics tests={createdTests} userId={user.id}/> : role === "Student" ? <StudentExam tests={createdTests} userId={user.id}/> : active === "Submissions" ? <TeacherGradingStudio tests={createdTests} userId={user.id}/> : active === "Analytics" ? <TeacherAnalytics tests={createdTests} userId={user.id}/> : active === "Tests" ? <TeacherTests tests={createdTests} onCreate={goToBuilder} onOpen={setSelectedTest}/> : active === "Students" ? <StudentDirectory teacherId={user.id}/> : <>
+{role === "Student" && active === "My analytics" ? <StudentAnalytics tests={createdTests} userId={user.id}/> : role === "Student" ? <StudentExam tests={createdTests} userId={user.id}/> : active === "Submissions" ? <TeacherGradingStudio tests={createdTests} userId={user.id}/> : active === "Analytics" ? <TeacherAnalytics tests={createdTests} userId={user.id}/> : active === "Tests" ? <TeacherTests tests={createdTests} onCreate={goToBuilder} onOpen={setSelectedTest}/> : active === "Students" ? <StudentDirectory teacherId={user.id}/> : <>
     <OverviewTab logoUrl="/cerebrix.png" totalStudents={dashboardStats.participants} activeTests={dashboardStats.scheduled} systemStatus="Operational" />
     
     <section className="content-grid">
