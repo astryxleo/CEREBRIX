@@ -59,10 +59,10 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
    <div className="side-top"><Brand/><button className="icon-btn mobile-close" onClick={()=>setMobileNav(false)} aria-label="Close menu"><X size={18}/></button></div>
    <div className="workspace"><div className="workspace-avatar">CS</div><div className="workspace-copy"><strong>Computer Science</strong><span>School workspace</span></div><ChevronDown size={15}/></div>
    <div className="nav-label">WORKSPACE</div>
-   <nav>{nav.map(({label,icon:Icon})=><button key={label} onClick={()=>{setActive(label);setMobileNav(false)}} className={`nav-item ${active===label?"active":""}`}><Icon size={17}/><span>{label}</span>{label==="Submissions"&&<span className="nav-count">8</span>}</button>)}</nav>
-   <div className="nav-label tools-label">TOOLS</div>
+   <nav>{role === "Teacher" ? nav.map(({label,icon:Icon})=><button key={label} onClick={()=>{setActive(label);setMobileNav(false)}} className={`nav-item ${active===label?"active":""}`}><Icon size={17}/><span>{label}</span></button>) : <button className="nav-item active" onClick={()=>{setActive("Overview");setMobileNav(false)}}><GraduationCap size={17}/><span>My exams</span></button>}</nav>
+   {role === "Teacher" && <><div className="nav-label tools-label">TOOLS</div>
    <button className="nav-item" onClick={()=>setNotice("Question bank is coming soon.")}><BookOpen size={17}/><span>Question bank</span><span className="soon">SOON</span></button>
-   <button className="nav-item" onClick={()=>setNotice("Sandbox settings will be available when secure grading is configured.")}><FlaskConical size={17}/><span>Code sandbox</span></button>
+   <button className="nav-item" onClick={()=>setNotice("Sandbox settings will be available when secure grading is configured.")}><FlaskConical size={17}/><span>Code sandbox</span></button></>}
    <div className="sidebar-bottom">
     <div className="security-card"><div className="security-icon"><ShieldCheck size={17}/></div><div><strong>Assessment integrity</strong><p>Built for focused, fair exams.</p></div><span className="status-dot"/></div>
     <button className="profile" onClick={()=>void signOut()} title="Sign out"><div className="profile-avatar">{(profile.display_name || user.email || "C").slice(0,1).toUpperCase()}</div><div className="profile-copy"><strong>{profile.display_name || user.email || "CEREBRIX user"}</strong><span>{role} account · Sign out</span></div><MoreHorizontal size={18}/></button>
