@@ -1,4 +1,5 @@
 import { useState } from "react";
+import TestBuilder, { type BuilderTest } from "./TestBuilder";
 import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, BrainCircuit, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Code2, FileCode2, Filter, FlaskConical, Gauge, GraduationCap, LayoutDashboard, Menu, MoreHorizontal, Plus, Search, ShieldCheck, Sparkles, Terminal, Users, X } from "lucide-react";
 
 type Tab = "Overview" | "Tests" | "Submissions" | "Students" | "Analytics";
@@ -15,10 +16,12 @@ function App(){
  const [active,setActive]=useState<Tab>("Overview");
  const [role,setRole]=useState<"Teacher"|"Student">("Teacher");
  const [showCreate,setShowCreate]=useState(false);
+ const [createdTests,setCreatedTests]=useState<BuilderTest[]>([]);
  const [mobileNav,setMobileNav]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
- const filtered=tests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
+ const allTests=[...createdTests,...tests];
+ const filtered=allTests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
  return <div className="app-shell">
   <aside className={`sidebar ${mobileNav?"sidebar-open":""}`}>
    <div className="side-top"><Brand/><button className="icon-btn mobile-close" onClick={()=>setMobileNav(false)} aria-label="Close menu"><X size={18}/></button></div>
@@ -64,7 +67,7 @@ function App(){
     <footer className="footer"><span>© 2026 CEREBRIX <span className="footer-sep">·</span> THINK. CODE. PROVE.</span><span><span className="footer-dot"/> YOUR WORKSPACE, IN FOCUS</span></footer>
    </div>
   </main>
-  {showCreate&&<div className="modal-backdrop" onClick={()=>setShowCreate(false)}><div className="modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><div className="modal-icon"><Plus size={20}/></div><button className="icon-btn" onClick={()=>setShowCreate(false)} aria-label="Close dialog"><X size={18}/></button></div><div className="panel-kicker">NEW ASSESSMENT</div><h2>Create a programming test</h2><p>Start with a name and choose the assessment type. You can configure questions and marking next.</p><form onSubmit={e=>{e.preventDefault();setShowCreate(false);setNotice("Assessment draft flow started. Connect the backend to save and publish tests.")}}><label>Assessment name<input required placeholder="e.g. Python Functions Test"/></label><label>Programming subject<select defaultValue="Python"><option>Python</option><option>MySQL</option><option>CSV & text files</option><option>Binary files</option><option>Mixed practical</option></select></label><div className="modal-actions"><button type="button" className="secondary-btn" onClick={()=>setShowCreate(false)}>Cancel</button><button className="primary-btn" type="submit">Continue <ArrowRight size={16}/></button></div></form><div className="modal-note"><ShieldCheck size={14}/> Tests are drafts until publishing is implemented.</div></div></div>}
+  {showCreate&&<TestBuilder onClose={()=>setShowCreate(false)} onSave={test=>{setCreatedTests(current=>[test,...current]);setNotice(test.status==="Scheduled"?`“${test.name}” scheduled in this session with ${test.totalMarks} marks and ${test.questionCount} questions.`:`“${test.name}” saved as a draft in this session.`);setActive("Tests");}}/>}
  </div>
 }
 export default App;
