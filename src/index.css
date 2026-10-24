@@ -178,3 +178,8 @@
 .directory-student-main span{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
 .directory-class{font-size:11px;color:#b4c2d5;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:rgba(255,255,255,.025)}
 @media(max-width:600px){.directory-stats{gap:8px}.directory-stats article{padding:12px;grid-template-columns:20px 1fr;column-gap:6px}.directory-stats article>strong{font-size:21px}.directory-fields{grid-template-columns:1fr}.directory-fields .builder-field:last-child{grid-column:auto}.directory-list-panel,.directory-form{padding:14px}.directory-list-heading{align-items:stretch;flex-direction:column}.directory-search{max-width:none}.directory-student{grid-template-columns:34px minmax(0,1fr) auto;gap:9px}.directory-avatar{width:32px;height:32px}.directory-class{grid-column:2;justify-self:start;grid-row:2}.directory-student>.builder-icon-danger{grid-column:3;grid-row:1}}
+
+.directory-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.directory-header-actions .secondary-btn,.directory-header-actions .primary-btn{white-space:nowrap}
+.directory-header-actions button:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:600px){.student-directory>.student-exam-header{align-items:flex-start;flex-direction:column}.directory-header-actions{width:100%}.directory-header-actions button{flex:1;justify-content:center}}
