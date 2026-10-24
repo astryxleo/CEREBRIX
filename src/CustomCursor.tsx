@@ -12,8 +12,8 @@ export default function CustomCursor() {
     const move = (event: PointerEvent) => {
       const cursor = document.getElementById("cerebrix-cursor");
       if (cursor) {
-        cursor.style.left = event.clientX + "px";
-        cursor.style.top = event.clientY + "px";
+        cursor.style.left = (event.clientX - 2) + "px";
+        cursor.style.top = (event.clientY - 1.5) + "px";
       }
       setVisible(true);
     };
