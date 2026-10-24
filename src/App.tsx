@@ -32,7 +32,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
  const [mobileNav,setMobileNav]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
- useEffect(()=>{setActive(pathTabs[location.pathname]??"Overview");setShowCreate(location.pathname==="/builder");},[location.pathname]);
+ useEffect(()=>{if(role==="Student"&&location.pathname!=="/"){navigate("/",{replace:true});return;}setActive(pathTabs[location.pathname]??"Overview");setShowCreate(role==="Teacher"&&location.pathname==="/builder");},[location.pathname,role,navigate]);
  const [dashboardStats,setDashboardStats]=useState({scheduled:0,participants:0,pending:0,average:null as number|null});
  const allTests=[...createdTests,...tests];
  const filtered=allTests.filter(t=>(t.name+" "+t.subject).toLowerCase().includes(query.toLowerCase()));
@@ -134,7 +134,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
    </motion.div>
   </main>
   {selectedTest&&<TestDetails test={selectedTest} onClose={()=>setSelectedTest(null)} onDelete={test=>{setCreatedTests(current=>current.filter(item=>!(item.name===test.name&&item.scheduledAt===test.scheduledAt)));setSelectedTest(null);setNotice(`“${test.name}” was deleted from this browser.`);}}/>}
-  {showCreate&&<TestBuilder onClose={()=>{setShowCreate(false);goTo("Tests");}} onSave={async test=>{
+  {role === "Teacher" && showCreate && <TestBuilder onClose={()=>{setShowCreate(false);goTo("Tests");}} onSave={async test=>{
    if(!supabase){setNotice("Supabase is not configured.");return;}
    const {data:assessment,error:assessmentError}=await supabase.from("assessments").insert({
     teacher_id:user.id,title:test.name,subject:test.subject,instructions:test.instructions,duration_minutes:test.duration,negative_marking:test.negativeMarking??0,
