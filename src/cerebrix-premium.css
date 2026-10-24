@@ -58,3 +58,15 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .review-flag-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 12px; border:1px solid rgba(0,207,255,.2); border-radius:9px; color:#dce6f2; background:rgba(0,207,255,.035); font-size:12px; transition:all .2s ease; }
 .review-flag-btn:hover,.review-flag-btn.active { color:#00cfff; border-color:rgba(0,207,255,.55); background:rgba(0,207,255,.1); box-shadow:0 0 16px rgba(0,207,255,.1); }
 .review-flag-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+.mcq-option-editor { display:flex; flex-direction:column; gap:9px; padding:15px; border:1px solid rgba(0,207,255,.13); border-radius:12px; background:rgba(0,207,255,.025); }
+.mcq-options-label { color:#00cfff; font:10px "JetBrains Mono",monospace; letter-spacing:.14em; }
+.mcq-option-row { display:flex; align-items:center; gap:10px; }
+.mcq-option-row>span,.mcq-option-letter { display:grid; place-items:center; flex:0 0 28px; width:28px; height:28px; border:1px solid rgba(0,207,255,.25); border-radius:8px; color:#00cfff; background:rgba(0,102,255,.08); font:11px "JetBrains Mono",monospace; }
+.mcq-option-row input { flex:1; min-width:0; }
+.mcq-student-options { display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+.mcq-student-option { display:flex; align-items:center; gap:12px; padding:13px 15px; border:1px solid rgba(220,230,242,.12); border-radius:11px; background:rgba(17,19,27,.7); color:#dce6f2; cursor:pointer; transition:all .18s ease; }
+.mcq-student-option:hover,.mcq-student-option.selected { border-color:rgba(0,207,255,.5); background:rgba(0,102,255,.09); box-shadow:0 0 18px rgba(0,102,255,.1); }
+.mcq-student-option input { accent-color:#0066ff; }
+.mcq-student-option>span:last-child { line-height:1.6; }
+.mcq-empty-options { color:rgba(220,230,242,.6); font-size:12px; }
