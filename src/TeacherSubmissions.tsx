@@ -31,7 +31,12 @@ export default function TeacherSubmissions({ tests }: Props) {
   }, [allRows, search, statusFilter]);
   const active = rows.find(r => r.name === selected) ?? rows[0];
   const exportSubmissions = () => {
-    const quote = (value: unknown) => '"' + String(value ?? "").replace(/"/g, '""') + '"';
+    const quote = (value: unknown) => {
+      const raw = String(value ?? "");
+      const first = raw.trimStart().charAt(0);
+      const safe = ["=", "+", "-", "@"].includes(first) ? "'" + raw : raw;
+      return '"' + safe.replace(/"/g, '""') + '"';
+    };
     const data = [
       ["Assessment", "Submission key", "Submitted at", "Answer count", "Score", "Maximum marks", "Feedback", "Answers"],
       ...rows.map(row => [
