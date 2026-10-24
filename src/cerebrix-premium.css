@@ -70,3 +70,12 @@ body { background: var(--cbx-black); color: var(--cbx-white); }
 .mcq-student-option input { accent-color:#0066ff; }
 .mcq-student-option>span:last-child { line-height:1.6; }
 .mcq-empty-options { color:rgba(220,230,242,.6); font-size:12px; }
+
+.teacher-mcq-options { display:grid; gap:7px; margin:12px 0; }
+.teacher-mcq-option { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid rgba(220,230,242,.1); border-radius:9px; color:#dce6f2; background:rgba(17,19,27,.45); font-size:12px; }
+.teacher-mcq-option b { display:grid; place-items:center; width:25px; height:25px; border-radius:7px; color:#00cfff; background:rgba(0,102,255,.12); font:11px "JetBrains Mono",monospace; }
+.teacher-mcq-option.chosen { border-color:rgba(0,207,255,.45); background:rgba(0,102,255,.09); }
+.teacher-mcq-option small { margin-left:auto; color:#00cfff; font:9px "JetBrains Mono",monospace; }
+.teacher-reference-answer { margin:10px 0 18px; padding:12px 14px; border:1px dashed rgba(0,207,255,.2); border-radius:10px; background:rgba(0,207,255,.025); }
+.teacher-reference-answer>span { color:#00cfff; font:9px "JetBrains Mono",monospace; letter-spacing:.08em; }
+.teacher-reference-answer pre { margin:10px 0 0; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; color:rgba(220,230,242,.75); font:12px/1.7 "JetBrains Mono",monospace; }
