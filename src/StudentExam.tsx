@@ -108,6 +108,10 @@ export default function StudentExam({ tests, userId }: Props) {
   }, [activeTest, attempt, remainingSeconds]);
 
   const begin = async (test: BuilderTest) => {
+    // Request fullscreen immediately inside the click gesture, before any network await.
+    if (document.fullscreenEnabled && !document.fullscreenElement) {
+      try { void document.documentElement.requestFullscreen().catch(() => { /* Browser may deny fullscreen. */ }); } catch { /* Fullscreen is best-effort. */ }
+    }
     const key = test.id ?? test.name;
     const previous = attempts[key] ?? attempts[test.name];
     if (previous) { setActiveName(test.name); return; }
@@ -124,9 +128,6 @@ export default function StudentExam({ tests, userId }: Props) {
     }
     setQuestionIndex(0);
     setActiveName(test.name);
-    if (document.fullscreenEnabled && !document.fullscreenElement) {
-      try { await document.documentElement.requestFullscreen(); } catch { /* Fullscreen requires browser permission/user gesture. */ }
-    }
   };
   const toggleReview = () => {
     if (!activeTest || !attempt || attempt.submittedAt || !currentQuestion) return;
