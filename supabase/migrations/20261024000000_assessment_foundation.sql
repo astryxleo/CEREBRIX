@@ -4,6 +4,33 @@
 
 create extension if not exists pgcrypto;
 
+-- A profile row is not an authorization source until its role is assigned by a trusted operator.
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null default '' check (char_length(display_name) <= 100),
+  avatar_url text,
+  role text not null default 'student' check (role in ('student', 'teacher')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.profiles enable row level security;
+grant select, insert on public.profiles to authenticated;
+grant update (display_name, avatar_url, updated_at) on public.profiles to authenticated;
+
+drop policy if exists "Users read their own profile" on public.profiles;
+create policy "Users read their own profile"
+  on public.profiles for select to authenticated
+  using (id = (select auth.uid()));
+drop policy if exists "Users create student profiles" on public.profiles;
+create policy "Users create student profiles"
+  on public.profiles for insert to authenticated
+  with check (id = (select auth.uid()) and role = 'student');
+drop policy if exists "Users update their profile details" on public.profiles;
+create policy "Users update their profile details"
+  on public.profiles for update to authenticated
+  using (id = (select auth.uid()))
+  with check (id = (select auth.uid()));
+
 create table if not exists public.assessments (
   id uuid primary key default gen_random_uuid(),
   teacher_id uuid not null references auth.users(id) on delete cascade,
@@ -91,8 +118,14 @@ alter table public.assessment_grades enable row level security;
 drop policy if exists "Teachers manage their assessments" on public.assessments;
 create policy "Teachers manage their assessments"
   on public.assessments for all to authenticated
-  using ((select auth.uid()) = teacher_id)
-  with check ((select auth.uid()) = teacher_id);
+  using (
+    (select auth.uid()) = teacher_id
+    and exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.role = 'teacher')
+  )
+  with check (
+    (select auth.uid()) = teacher_id
+    and exists (select 1 from public.profiles p where p.id = (select auth.uid()) and p.role = 'teacher')
+  );
 
 -- Students may see only currently available assessments. Teachers can see their own
 -- assessments, including drafts and reference answers via the separate question policy.
@@ -177,6 +210,33 @@ create policy "Students start submissions for available assessments"
   );
 
 -- Keep student edits to answer content only; score/feedback live in a separate table.
+-- Prevent a student from moving an attempt to another assessment or forging its timestamps.
+create or replace function public.guard_assessment_submission_update()
+returns trigger
+language plpgsql
+set search_path = pg_catalog, public
+as $
+begin
+  if new.student_id <> old.student_id
+     or new.assessment_id <> old.assessment_id
+     or new.started_at <> old.started_at then
+    raise exception 'Submission identity fields cannot be changed';
+  end if;
+  if old.status = 'in_progress' and new.status = 'submitted' then
+    new.submitted_at := now();
+  else
+    new.submitted_at := null;
+  end if;
+  new.last_saved_at := now();
+  return new;
+end;
+$;
+
+drop trigger if exists guard_assessment_submission_update on public.assessment_submissions;
+create trigger guard_assessment_submission_update
+  before update on public.assessment_submissions
+  for each row execute function public.guard_assessment_submission_update();
+
 drop policy if exists "Students save their in progress answers" on public.assessment_submissions;
 create policy "Students save their in progress answers"
   on public.assessment_submissions for update to authenticated
