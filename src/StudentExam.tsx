@@ -62,6 +62,17 @@ export default function StudentExam({ tests, userId }: Props) {
     return () => { alive = false; };
   }, [userId, tests]);
   useEffect(() => {
+    if (!supabase || !activeTest || !attempt?.submissionId || attempt.submittedAt) return;
+    const timer = window.setTimeout(async () => {
+      const { error } = await supabase!.from("assessment_submissions")
+        .update({ answers: attempt.answers })
+        .eq("id", attempt.submissionId!);
+      if (error) setNotice("Autosave could not sync. Your latest edits remain on this device.");
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [activeTest?.id, attempt?.submissionId, attempt?.answers, attempt?.submittedAt]);
+
+  useEffect(() => {
     if (!activeTest || !attempt || attempt.submittedAt || remainingSeconds > 0) return;
     void submit();
   }, [activeTest, attempt, remainingSeconds]);
