@@ -20,7 +20,7 @@ create policy "Students log their own assessment integrity events"
       select 1 from public.assessment_submissions s
       where s.id = submission_id
         and s.student_id = (select auth.uid())
-        and s.assessment_id = assessment_id
+        and s.assessment_id = assessment_integrity_events.assessment_id
     )
   );
 drop policy if exists "Students read their own assessment integrity events" on public.assessment_integrity_events;
