@@ -67,7 +67,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
   if(!supabase)return;
   let alive=true;
   const loadAssessments=async()=>{
-   const {data,error}=await supabase!.from("assessments").select("id,title,subject,instructions,duration_minutes,opens_at,closes_at,status,assessment_questions(id,position,kind,title,prompt,marks,starter_content,dataset,assessment_question_keys(reference_answer))").order("created_at",{ascending:false});
+   const {data,error}=await supabase!.from("assessments").select("id,title,subject,instructions,duration_minutes,negative_marking,opens_at,closes_at,status,assessment_questions(id,position,kind,title,prompt,marks,starter_content,dataset,options,assessment_question_keys(reference_answer))").order("created_at",{ascending:false});
    if(!alive)return;
    if(error){setNotice("Could not load shared assessments. Check database access and your role.");return;}
    const mapped=(data??[]).map((row:any):BuilderTest=>{
@@ -76,9 +76,9 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
      id:row.id,name:row.title,subject:row.subject,status:row.status==="scheduled"||row.status==="published"?"Scheduled":"Draft",
      date:row.opens_at?new Date(row.opens_at).toLocaleString():"Not scheduled",students:"—",progress:0,accent:"blue",
      totalMarks:questions.reduce((sum:number,q:any)=>sum+Number(q.marks||0),0),
-     duration:row.duration_minutes,scheduledAt:row.opens_at??"",deadline:row.closes_at??"",instructions:row.instructions??"",
+     duration:row.duration_minutes,negativeMarking:Number(row.negative_marking??0),scheduledAt:row.opens_at??"",deadline:row.closes_at??"",instructions:row.instructions??"",
      questionCount:questions.length,
-     questions:questions.map((q:any,index:number)=>({id:index+1,kind:q.kind,title:q.title??"",prompt:q.prompt,marks:Number(q.marks||5),referenceAnswer:Array.isArray(q.assessment_question_keys)?(q.assessment_question_keys[0]?.reference_answer??""):(q.assessment_question_keys?.reference_answer??""),dataset:q.dataset??""}))
+     questions:questions.map((q:any,index:number)=>({id:index+1,kind:q.kind,title:q.title??"",prompt:q.prompt,marks:Number(q.marks||5),referenceAnswer:Array.isArray(q.assessment_question_keys)?(q.assessment_question_keys[0]?.reference_answer??""):(q.assessment_question_keys?.reference_answer??""),dataset:q.dataset??"",options:Array.isArray(q.options)?q.options:[]}))
     };
    });
    setCreatedTests(mapped);
@@ -137,13 +137,13 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
   {showCreate&&<TestBuilder onClose={()=>{setShowCreate(false);goTo("Tests");}} onSave={async test=>{
    if(!supabase){setNotice("Supabase is not configured.");return;}
    const {data:assessment,error:assessmentError}=await supabase.from("assessments").insert({
-    teacher_id:user.id,title:test.name,subject:test.subject,instructions:test.instructions,duration_minutes:test.duration,
+    teacher_id:user.id,title:test.name,subject:test.subject,instructions:test.instructions,duration_minutes:test.duration,negative_marking:test.negativeMarking??0,
     opens_at:test.status==="Scheduled"&&test.scheduledAt?new Date(test.scheduledAt).toISOString():null,
     closes_at:test.deadline?new Date(test.deadline).toISOString():null,status:test.status==="Scheduled"?"scheduled":"draft"
    }).select("id").single();
    if(assessmentError||!assessment){setNotice("Assessment could not be saved to the shared database. Check that your account has the Teacher role.");return;}
    const questions=test.questions.filter(question=>question.prompt.trim()).map((question,index)=>({
-    assessment_id:assessment.id,position:index+1,kind:question.kind,title:question.title,prompt:question.prompt,marks:question.marks,starter_content:"",dataset:question.dataset
+    assessment_id:assessment.id,position:index+1,kind:question.kind,title:question.title,prompt:question.prompt,marks:question.marks,starter_content:"",dataset:question.dataset,options:question.options??[]
    }));
    if(questions.length){
     const {data:createdQuestions,error:questionError}=await supabase.from("assessment_questions").insert(questions).select("id,position");
@@ -155,10 +155,10 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
     }
    }
    setShowCreate(false);setNotice(`“${test.name}” saved to your shared workspace.`);goTo("Tests");
-   const {data:latest}=await supabase.from("assessments").select("id,title,subject,instructions,duration_minutes,opens_at,closes_at,status,assessment_questions(id,position,kind,title,prompt,marks,starter_content,dataset,assessment_question_keys(reference_answer))").eq("id",assessment.id).single();
+   const {data:latest}=await supabase.from("assessments").select("id,title,subject,instructions,duration_minutes,negative_marking,opens_at,closes_at,status,assessment_questions(id,position,kind,title,prompt,marks,starter_content,dataset,options,assessment_question_keys(reference_answer))").eq("id",assessment.id).single();
    if(latest){
     const qs=[...(latest.assessment_questions??[])].sort((a:any,b:any)=>a.position-b.position);
-    setCreatedTests(current=>[{...test,id:latest.id,name:latest.title,subject:latest.subject,status:latest.status==="scheduled"||latest.status==="published"?"Scheduled":"Draft",scheduledAt:latest.opens_at??"",deadline:latest.closes_at??"",duration:latest.duration_minutes,instructions:latest.instructions??"",questionCount:qs.length,totalMarks:qs.reduce((sum:number,q:any)=>sum+Number(q.marks||0),0),questions:qs.map((q:any,index:number)=>({id:index+1,kind:q.kind,title:q.title??"",prompt:q.prompt,marks:Number(q.marks||5),referenceAnswer:Array.isArray(q.assessment_question_keys)?(q.assessment_question_keys[0]?.reference_answer??""):(q.assessment_question_keys?.reference_answer??""),dataset:q.dataset??""}))},...current.filter(item=>item.name!==latest.title)]); 
+    setCreatedTests(current=>[{...test,id:latest.id,name:latest.title,subject:latest.subject,status:latest.status==="scheduled"||latest.status==="published"?"Scheduled":"Draft",scheduledAt:latest.opens_at??"",deadline:latest.closes_at??"",duration:latest.duration_minutes,instructions:latest.instructions??"",questionCount:qs.length,totalMarks:qs.reduce((sum:number,q:any)=>sum+Number(q.marks||0),0),questions:qs.map((q:any,index:number)=>({id:index+1,kind:q.kind,title:q.title??"",prompt:q.prompt,marks:Number(q.marks||5),referenceAnswer:Array.isArray(q.assessment_question_keys)?(q.assessment_question_keys[0]?.reference_answer??""):(q.assessment_question_keys?.reference_answer??""),dataset:q.dataset??"",options:Array.isArray(q.options)?q.options:[]}))},...current.filter(item=>item.name!==latest.title)]); 
    }
   }}/>}</div>
 }
