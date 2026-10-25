@@ -82,7 +82,7 @@ export default function TestBuilder({ onClose, onSave }: Props) {
     }
   };
 
-  return <div className="modal-backdrop builder-backdrop" onClick={onClose}>
+  return <div className="modal-backdrop builder-backdrop" onClick={() => { if (!saving) onClose(); }}>
     <section className="test-builder" role="dialog" aria-modal="true" aria-labelledby="builder-title" onClick={e => e.stopPropagation()}>
       <header className="builder-header">
         <div className="builder-brand-icon"><FileCode2 size={20}/></div>
