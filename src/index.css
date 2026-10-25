@@ -562,7 +562,7 @@ html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
 .notification-empty strong{color:#f2f7ff;font-size:14px}
 .notification-empty p{max-width:260px;margin:0;color:#b7c9da;font-size:12px;line-height:1.6}
 .notification-btn{position:relative}
-.notification-btn i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#52d9ff}
+.notification-btn i{display:none;width:6px;height:6px;border-radius:50%;background:#52d9ff}.notification-btn i.has-unread{display:inline-block}
 @media(max-width:700px){
  .notification-card{max-height:calc(100dvh - 88px) !important}
  .notification-card-head{gap:8px}
