@@ -231,6 +231,6 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
     setCreatedTests(current=>[{...test,id:latest.id,name:latest.title,subject:latest.subject,status:latest.status==="scheduled"||latest.status==="published"?"Scheduled":"Draft",scheduledAt:latest.opens_at??"",deadline:latest.closes_at??"",duration:latest.duration_minutes,instructions:latest.instructions??"",questionCount:qs.length,totalMarks:qs.reduce((sum:number,q:any)=>sum+Number(q.marks||0),0),questions:qs.map((q:any,index:number)=>({id:index+1,kind:q.kind,title:q.title??"",prompt:q.prompt,marks:Number(q.marks||5),referenceAnswer:Array.isArray(q.assessment_question_keys)?(q.assessment_question_keys[0]?.reference_answer??""):(q.assessment_question_keys?.reference_answer??""),dataset:q.dataset??"",options:Array.isArray(q.options)?q.options:[]}))},...current.filter(item=>item.name!==latest.title)]); 
    }
    return true;
-  }}/>}</Suspense></div>
+  }}/></Suspense>}</div>
 }
 export default App;
