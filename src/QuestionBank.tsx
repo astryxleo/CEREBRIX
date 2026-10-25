@@ -11,7 +11,7 @@ type BankQuestion = {
   marks: number;
   options: unknown;
   dataset: string | null;
-  reference_answer?: string;
+  starter_content: string | null;
   assessment_title: string;
   subject: string;
 };
@@ -30,7 +30,7 @@ export default function QuestionBank({ teacherId }: { teacherId: string }) {
     setLoading(true); setError("");
     const { data, error: loadError } = await supabase
       .from("assessments")
-      .select("id,title,subject,assessment_questions(id,position,kind,title,prompt,marks,options,dataset,assessment_question_keys(reference_answer))")
+      .select("id,title,subject,assessment_questions(id,position,kind,title,prompt,marks,options,dataset,starter_content)")
       .eq("teacher_id", teacherId)
       .order("created_at", { ascending: false });
     if (loadError) {
@@ -43,8 +43,7 @@ export default function QuestionBank({ teacherId }: { teacherId: string }) {
           rows.push({
             id: q.id, position: Number(q.position ?? 0), kind: q.kind ?? "coding",
             title: q.title ?? "", prompt: q.prompt ?? "", marks: Number(q.marks ?? 0),
-            options: q.options ?? [], dataset: q.dataset ?? "",
-            reference_answer: Array.isArray(q.assessment_question_keys) ? q.assessment_question_keys[0]?.reference_answer : q.assessment_question_keys?.reference_answer,
+            options: q.options ?? [], dataset: q.dataset ?? "", starter_content: q.starter_content ?? "",
             assessment_title: assessment.title ?? "Untitled assessment", subject: assessment.subject ?? "General"
           });
         }
@@ -54,7 +53,15 @@ export default function QuestionBank({ teacherId }: { teacherId: string }) {
     setLoading(false);
   };
 
-  useEffect(() => { void loadQuestions(); }, [teacherId]);
+  useEffect(() => {
+    void loadQuestions();
+    if (!supabase) return;
+    const channel = supabase.channel(`cerebrix-question-bank-${teacherId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "assessments", filter: `teacher_id=eq.${teacherId}` }, () => { void loadQuestions(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "assessment_questions" }, () => { void loadQuestions(); })
+      .subscribe();
+    return () => { void supabase!.removeChannel(channel); };
+  }, [teacherId]);
 
   const subjects = useMemo(() => ["all", ...Array.from(new Set(questions.map(q => q.subject).filter(Boolean))).sort()], [questions]);
   const kinds = useMemo(() => ["all", ...Array.from(new Set(questions.map(q => q.kind).filter(Boolean))).sort()], [questions]);
@@ -64,7 +71,19 @@ export default function QuestionBank({ teacherId }: { teacherId: string }) {
   }), [questions, subject, kind, query]);
 
   const copyQuestion = async (question: BankQuestion) => {
-    const text = [question.title, question.prompt].filter(Boolean).join("\n\n");
+    const optionLines = Array.isArray(question.options) ? question.options.map((option, index) => {
+      const label = String.fromCharCode(65 + index);
+      const value = typeof option === "object" && option !== null ? String((option as any).text ?? (option as any).label ?? JSON.stringify(option)) : String(option);
+      return value.trim() ? `${label}. ${value}` : "";
+    }).filter(Boolean) : [];
+    const text = [
+      question.title || `Question ${question.position}`,
+      `Type: ${question.kind} | Marks: ${question.marks} | Subject: ${question.subject}`,
+      question.prompt,
+      optionLines.length ? `Options:\n${optionLines.join("\n")}` : "",
+      question.starter_content ? `Starter content:\n${question.starter_content}` : "",
+      question.dataset ? `Dataset:\n${question.dataset}` : ""
+    ].filter(Boolean).join("\n\n");
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(question.id);
@@ -88,6 +107,6 @@ export default function QuestionBank({ teacherId }: { teacherId: string }) {
     </div>
     {error && <div className="question-bank-error" role="alert">{error}</div>}
     <div className="question-bank-results-head"><span>{loading ? "Loading library…" : `Showing ${visible.length} of ${questions.length} questions`}</span><span>Synced from your saved assessments</span></div>
-    {loading ? <div className="question-bank-empty"><RefreshCw size={21} className="question-bank-spin"/><strong>Loading your library</strong><p>Gathering questions from your assessments.</p></div> : visible.length === 0 ? <div className="question-bank-empty"><CircleHelp size={25}/><strong>{questions.length ? "No questions match these filters" : "Your library is ready for its first question"}</strong><p>{questions.length ? "Try a different search or clear one of the filters." : "Create an assessment and add questions. Saved questions will automatically appear here."}</p>{(query || subject !== "all" || kind !== "all") && <button onClick={() => { setQuery(""); setSubject("all"); setKind("all"); }}>Clear filters</button>}</div> : <div className="question-bank-grid">{visible.map((q, index) => <article className="question-bank-card" key={q.id}><div className="question-bank-card-top"><span className="question-bank-index">Q{String(index + 1).padStart(2, "0")}</span><span className="question-bank-kind">{q.kind.replaceAll("_", " ")}</span><span className="question-bank-marks">{q.marks} {q.marks === 1 ? "mark" : "marks"}</span></div><h3>{q.title || `Question ${q.position}`}</h3><p className="question-bank-prompt">{q.prompt}</p>{Array.isArray(q.options) && q.options.length > 0 && <div className="question-bank-options">{q.options.slice(0, 5).map((option, i) => <span key={i}>{String(typeof option === "object" && option !== null ? (option as any).text ?? (option as any).label ?? JSON.stringify(option) : option)}</span>)}</div>}{q.dataset && <div className="question-bank-dataset"><span>DATASET / STARTER DATA</span><pre>{q.dataset.slice(0, 280)}{q.dataset.length > 280 ? "…" : ""}</pre></div>}<div className="question-bank-card-foot"><div><strong>{q.assessment_title}</strong><span>{q.subject}</span></div><button onClick={() => void copyQuestion(q)} aria-label={copiedId === q.id ? "Question copied" : "Copy question"}>{copiedId === q.id ? <Check size={15}/> : <Copy size={15}/>} {copiedId === q.id ? "Copied" : "Copy prompt"}</button></div></article>)}</div>}
+    {loading ? <div className="question-bank-empty"><RefreshCw size={21} className="question-bank-spin"/><strong>Loading your library</strong><p>Gathering questions from your assessments.</p></div> : visible.length === 0 ? <div className="question-bank-empty"><CircleHelp size={25}/><strong>{questions.length ? "No questions match these filters" : "Your library is ready for its first question"}</strong><p>{questions.length ? "Try a different search or clear one of the filters." : "Create an assessment and add questions. Saved questions will automatically appear here."}</p>{(query || subject !== "all" || kind !== "all") && <button onClick={() => { setQuery(""); setSubject("all"); setKind("all"); }}>Clear filters</button>}</div> : <div className="question-bank-grid">{visible.map((q, index) => <article className="question-bank-card" key={q.id}><div className="question-bank-card-top"><span className="question-bank-index">Q{String(index + 1).padStart(2, "0")}</span><span className="question-bank-kind">{q.kind.replaceAll("_", " ")}</span><span className="question-bank-marks">{q.marks} {q.marks === 1 ? "mark" : "marks"}</span></div><h3>{q.title || `Question ${q.position}`}</h3><p className="question-bank-prompt">{q.prompt}</p>{Array.isArray(q.options) && q.options.length > 0 && <div className="question-bank-options">{q.options.slice(0, 5).map((option, i) => <span key={i}>{String(typeof option === "object" && option !== null ? (option as any).text ?? (option as any).label ?? JSON.stringify(option) : option)}</span>)}</div>}{(q.starter_content || q.dataset) && <div className="question-bank-dataset"><span>{q.starter_content ? "STARTER CONTENT" : "DATASET"}</span><pre>{(q.starter_content || q.dataset || "").slice(0, 280)}{(q.starter_content || q.dataset || "").length > 280 ? "…" : ""}</pre>{q.starter_content && q.dataset && <pre>{q.dataset.slice(0, 180)}{q.dataset.length > 180 ? "…" : ""}</pre>}</div>}<div className="question-bank-card-foot"><div><strong>{q.assessment_title}</strong><span>{q.subject}</span></div><button onClick={() => void copyQuestion(q)} aria-label={copiedId === q.id ? "Question copied" : "Copy question"}>{copiedId === q.id ? <Check size={15}/> : <Copy size={15}/>} {copiedId === q.id ? "Copied" : "Copy prompt"}</button></div></article>)}</div>}
   </section>;
 }
