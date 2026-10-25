@@ -677,3 +677,56 @@ html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
 @media(max-width:640px){.support-overlay{padding:8px;align-items:stretch}.support-form-modal{max-height:calc(100dvh - 16px);border-radius:16px}.support-form-head{padding:18px 15px 15px;gap:10px}.support-icon{width:38px;height:38px;flex-basis:38px;border-radius:11px}.support-head-copy h2{font-size:22px}.support-head-copy p{font-size:10px}.support-form-scroll{padding:16px 14px 20px}.support-form-grid,.support-response-grid{grid-template-columns:1fr;gap:13px}.support-submit-row{align-items:flex-start;flex-direction:column}.support-submit-row .primary-btn{width:100%}.support-admin-shell{grid-template-columns:1fr}.support-admin-sidebar{position:relative;height:auto;padding:15px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border-right:0;border-bottom:1px solid rgba(190,225,255,.12)}.support-admin-brand{padding:0}.support-admin-label,.support-admin-secure{display:none}.support-admin-identity{grid-column:1/-1;margin:0}.support-admin-sidebar-bottom{display:flex;align-items:center;justify-content:space-between;grid-column:1/-1;margin:0}.support-admin-sidebar-bottom button{padding:9px}.support-admin-main{padding:20px 12px}.support-admin-topbar{flex-direction:column;gap:13px}.support-admin-topbar .support-refresh{align-self:flex-start}.support-admin-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.support-admin-metrics article{padding:12px}.support-admin-metrics article>strong{font-size:25px}.support-admin-metrics article>span{font-size:9px}.support-inbox-panel{min-height:350px}.support-ticket-detail{padding:14px}.support-detail-head{flex-direction:column}.support-admin-footer{flex-direction:column;line-height:1.6}.support-requester-card{flex-wrap:wrap}.support-requester-card>.support-role-pill{margin-left:44px}.support-attachment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 @media(max-width:720px){.help-btn{display:grid}}
+
+
+/* Question Bank — searchable, reusable assessment content */
+.question-bank-page{display:grid;gap:17px}
+.question-bank-hero{display:flex;align-items:center;gap:16px;padding:23px;border:1px solid rgba(0,207,255,.16);border-radius:15px;background:radial-gradient(ellipse at 92% 0,rgba(0,102,255,.14),transparent 42%),linear-gradient(135deg,#0b111b,#05080d);position:relative;overflow:hidden}
+.question-bank-hero-icon{width:48px;height:48px;display:grid;place-items:center;flex-shrink:0;border:1px solid rgba(0,207,255,.2);border-radius:13px;background:rgba(0,207,255,.07);color:#4acfff}
+.question-bank-hero h2{font-size:23px;letter-spacing:-.045em;margin:8px 0}
+.question-bank-hero h2>span{color:var(--cyan)}
+.question-bank-hero p{font-size:11px;line-height:1.7;color:#8292a8;margin:0;max-width:580px}
+.question-bank-total{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.question-bank-total strong{font-size:28px;letter-spacing:-.06em}
+.question-bank-total span{font:9px 'DM Mono',monospace;letter-spacing:.13em;color:#73869d}
+.question-bank-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.question-bank-search,.question-bank-filter{height:39px;display:flex;align-items:center;gap:9px;padding:0 11px;border:1px solid var(--line);border-radius:9px;background:#070b11;color:#71849a}
+.question-bank-search{flex:1;min-width:220px}
+.question-bank-search input,.question-bank-filter select{background:transparent;border:0;outline:0;color:#dce6f2;font-size:11px;min-width:0}
+.question-bank-search input{width:100%}
+.question-bank-search input::placeholder{color:#66768b}
+.question-bank-filter select{max-width:180px;cursor:pointer}
+.question-bank-filter option{background:#0b111a;color:#eaf5ff}
+.question-bank-refresh{height:39px;display:flex;align-items:center;gap:7px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:#0a111b;color:#b5c7dc;font-size:10px}
+.question-bank-refresh:disabled{opacity:.55;cursor:wait}
+.question-bank-results-head{display:flex;justify-content:space-between;gap:12px;color:#73859b;font:10px 'DM Mono',monospace}
+.question-bank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.question-bank-card{min-width:0;padding:17px;border:1px solid rgba(220,230,242,.095);border-radius:13px;background:linear-gradient(145deg,rgba(12,18,27,.97),rgba(5,8,13,.98));transition:border-color .2s,transform .2s}
+.question-bank-card:hover{border-color:rgba(0,207,255,.23);transform:translateY(-1px)}
+.question-bank-card-top{display:flex;align-items:center;gap:7px}
+.question-bank-index{font:10px 'DM Mono',monospace;color:#57c8ff;background:rgba(0,102,255,.12);border:1px solid rgba(0,102,255,.2);border-radius:5px;padding:5px 7px}
+.question-bank-kind{font-size:9px;text-transform:capitalize;color:#a7b7ca;background:rgba(220,230,242,.05);border:1px solid var(--line);border-radius:5px;padding:5px 7px}
+.question-bank-marks{margin-left:auto;font:10px 'DM Mono',monospace;color:#8c9eb4}
+.question-bank-card h3{font-size:14px;line-height:1.45;letter-spacing:-.02em;margin:14px 0 8px}
+.question-bank-prompt{font-size:11px;line-height:1.75;color:#9aabc0;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden;min-height:38px}
+.question-bank-options{display:grid;gap:5px;margin:10px 0}
+.question-bank-options span{font-size:10px;color:#90a3b8;padding:7px 9px;background:rgba(255,255,255,.025);border:1px solid rgba(220,230,242,.06);border-radius:6px}
+.question-bank-dataset{margin-top:11px}
+.question-bank-dataset>span{font:9px 'DM Mono',monospace;letter-spacing:.08em;color:#6485a4}
+.question-bank-dataset pre{font:10px 'DM Mono',monospace;color:#90b9d7;white-space:pre-wrap;overflow-wrap:anywhere;max-height:100px;overflow:auto;padding:9px;background:#030609;border:1px solid var(--line);border-radius:7px}
+.question-bank-card-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding-top:13px;border-top:1px solid rgba(220,230,242,.07)}
+.question-bank-card-foot>div{min-width:0;display:grid;gap:5px}
+.question-bank-card-foot strong{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.question-bank-card-foot span{font-size:9px;color:#71859b}
+.question-bank-card-foot button{display:flex;align-items:center;gap:6px;flex-shrink:0;background:rgba(0,102,255,.1);border:1px solid rgba(0,102,255,.2);border-radius:7px;color:#8dcaff;padding:8px 9px;font-size:10px}
+.question-bank-card-foot button:hover{background:rgba(0,102,255,.2);color:#fff}
+.question-bank-empty{min-height:230px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;padding:25px;border:1px dashed rgba(220,230,242,.12);border-radius:13px;background:rgba(8,12,18,.55);color:#6c8199}
+.question-bank-empty>svg{color:#49bfff}
+.question-bank-empty strong{font-size:13px;color:#d9e6f5}
+.question-bank-empty p{max-width:380px;font-size:11px;line-height:1.7;margin:0}
+.question-bank-empty button{margin-top:5px;padding:8px 12px;border:1px solid var(--line);border-radius:7px;background:#101925;color:#b8d5ef;font-size:10px}
+.question-bank-error{padding:11px 13px;border:1px solid rgba(255,94,110,.22);border-radius:8px;background:rgba(255,70,90,.06);color:#ff9ba7;font-size:11px}
+.question-bank-spin{animation:question-bank-rotate 1s linear infinite}
+@keyframes question-bank-rotate{to{transform:rotate(360deg)}}
+@media(max-width:900px){.question-bank-grid{grid-template-columns:1fr}.question-bank-filter{flex:1}.question-bank-filter select{max-width:none;width:100%}}
+@media(max-width:560px){.question-bank-hero{align-items:flex-start;padding:17px;gap:11px}.question-bank-hero-icon{width:40px;height:40px}.question-bank-hero h2{font-size:19px}.question-bank-total strong{font-size:22px}.question-bank-total span{font-size:8px}.question-bank-toolbar{display:grid;grid-template-columns:1fr 1fr}.question-bank-search{grid-column:1/-1;min-width:0}.question-bank-filter{min-width:0}.question-bank-refresh{justify-content:center}.question-bank-results-head{font-size:9px}.question-bank-card{padding:14px}}
