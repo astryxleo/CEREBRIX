@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
-import { Activity, AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronDown, Clock3, ImagePlus, LifeBuoy, LogOut, MessageSquareText, Paperclip, RefreshCw, Search, Send, ShieldCheck, Sparkles, Ticket, UploadCloud, X } from "lucide-react";
+import { Activity, AlertCircle, ArrowRight, CheckCircle2, Clock3, ImagePlus, LifeBuoy, LogOut, MessageSquareText, Paperclip, RefreshCw, Search, Send, ShieldCheck, Sparkles, Ticket, UploadCloud, X } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
 type SupportRole = "student" | "teacher";
