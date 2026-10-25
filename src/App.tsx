@@ -190,23 +190,23 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
   {supportOpen&&<SupportTicketForm user={user} profile={{display_name:profile.display_name,role:role==="Teacher"?"teacher":"student"}} onClose={()=>setSupportOpen(false)}/>}
   {selectedTest&&<TestDetails test={selectedTest} onClose={()=>setSelectedTest(null)} onDelete={test=>{setCreatedTests(current=>current.filter(item=>!(item.name===test.name&&item.scheduledAt===test.scheduledAt)));setSelectedTest(null);setNotice(`“${test.name}” was deleted from this browser.`);}}/>}
   {role === "Teacher" && showCreate && <TestBuilder onClose={()=>{setShowCreate(false);goTo("Tests");}} onSave={async test=>{
-   if(!supabase){setNotice("Supabase is not configured.");return;}
+   if(!supabase){setNotice("Supabase is not configured.");return false;}
    const {data:assessment,error:assessmentError}=await supabase.from("assessments").insert({
     teacher_id:user.id,title:test.name,subject:test.subject,instructions:test.instructions,duration_minutes:test.duration,negative_marking:test.negativeMarking??0,
     opens_at:test.status==="Scheduled"&&test.scheduledAt?new Date(test.scheduledAt).toISOString():null,
     closes_at:test.deadline?new Date(test.deadline).toISOString():null,status:test.status==="Scheduled"?"scheduled":"draft"
    }).select("id").single();
-   if(assessmentError||!assessment){setNotice("Assessment could not be saved to the shared database. Check that your account has the Teacher role.");return;}
+   if(assessmentError||!assessment){setNotice("Assessment could not be saved to the shared database. Check that your account has the Teacher role.");return false;}
    const questions=test.questions.filter(question=>question.prompt.trim()).map((question,index)=>({
     assessment_id:assessment.id,position:index+1,kind:question.kind,title:question.title,prompt:question.prompt,marks:question.marks,starter_content:"",dataset:question.dataset,options:question.options??[]
    }));
    if(questions.length){
     const {data:createdQuestions,error:questionError}=await supabase.from("assessment_questions").insert(questions).select("id,position");
-    if(questionError||!createdQuestions){await supabase.from("assessments").delete().eq("id",assessment.id);setNotice("Questions could not be saved. No partial assessment was kept.");return;}
+    if(questionError||!createdQuestions){await supabase.from("assessments").delete().eq("id",assessment.id);setNotice("Questions could not be saved. No partial assessment was kept.");return false;}
     const keys=createdQuestions.map(question=>({question_id:question.id,reference_answer:test.questions.filter(item=>item.prompt.trim())[question.position-1]?.referenceAnswer??""}));
     if(keys.some(key=>key.reference_answer)){
      const {error:keyError}=await supabase.from("assessment_question_keys").insert(keys.filter(key=>key.reference_answer));
-     if(keyError){await supabase.from("assessments").delete().eq("id",assessment.id);setNotice("Answer keys could not be saved. No partial assessment was kept.");return;}
+     if(keyError){await supabase.from("assessments").delete().eq("id",assessment.id);setNotice("Answer keys could not be saved. No partial assessment was kept.");return false;}
     }
    }
    setShowCreate(false);setNotice(`“${test.name}” saved to your shared workspace.`);goTo("Tests");
