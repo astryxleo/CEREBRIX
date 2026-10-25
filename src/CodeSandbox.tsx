@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Code2, Copy, Check, Download, RotateCcw, Save, ShieldCheck, Terminal, FileCode2, ChevronDown } from "lucide-react";
 
 type Language = "python" | "sql" | "javascript";
