@@ -3,7 +3,7 @@ import { Activity, ArrowRight, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck, KeyR
 import type { Session, User } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
-type Profile = { id: string; display_name: string; role: "student" | "teacher"; avatar_url: string | null };
+type Profile = { id: string; display_name: string; role: "student" | "teacher" | "admin"; avatar_url: string | null };
 type Props = { children: (context: { user: User; profile: Profile; signOut: () => Promise<void> }) => ReactNode };
 
 export default function AuthGate({ children }: Props) {
