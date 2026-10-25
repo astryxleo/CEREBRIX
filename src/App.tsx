@@ -37,6 +37,17 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
  const [profileMenuOpen,setProfileMenuOpen]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
+ useEffect(()=>{
+  if(notice!=="__notifications__")return;
+  const closeOnEscape=(event:KeyboardEvent)=>{if(event.key==="Escape")setNotice("");};
+  const closeOnOutside=(event:MouseEvent)=>{
+   const target=event.target;
+   if(target instanceof Node&&!document.querySelector(".notification-anchor")?.contains(target))setNotice("");
+  };
+  document.addEventListener("keydown",closeOnEscape);
+  document.addEventListener("pointerdown",closeOnOutside);
+  return()=>{document.removeEventListener("keydown",closeOnEscape);document.removeEventListener("pointerdown",closeOnOutside);};
+ },[notice]);
  useEffect(()=>{if(role==="Student"&&location.pathname!=="/"&&location.pathname!=="/my-analytics"&&location.pathname!=="/leaderboard"&&location.pathname!=="/terminated"){navigate("/",{replace:true});return;}setActive(pathTabs[location.pathname]??"Overview");setShowCreate(role==="Teacher"&&location.pathname==="/builder");},[location.pathname,role,navigate]);
  const [dashboardStats,setDashboardStats]=useState({scheduled:0,participants:0,pending:0,average:null as number|null});
  const allTests=[...createdTests,...tests];
