@@ -379,3 +379,14 @@ html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
 .profile-menu>button:hover{border-color:rgba(255,91,113,.2);background:rgba(255,70,90,.08);color:#ffb6c0}
 @keyframes profile-menu-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:600px){.student-analytics{gap:14px}.student-analytics .analytics-metrics{gap:9px}.profile-menu{min-width:205px;right:0;left:auto}}
+
+/* Inbox opens as a compact floating popover attached to the bell */
+.top-actions{position:relative}
+.notification-anchor{position:relative;display:flex;align-items:center;flex-shrink:0}
+.notification-btn.notification-open{color:#e9f8ff;background:rgba(0,102,255,.12);border-color:rgba(0,207,255,.22)}
+.notification-card{position:absolute;top:calc(100% + 13px);right:-12px;z-index:120;width:min(390px,calc(100vw - 28px));margin:0;padding:17px;border:1px solid rgba(0,207,255,.23);border-radius:15px;background:linear-gradient(145deg,rgba(12,20,32,.985),rgba(4,7,12,.99));box-shadow:0 24px 70px rgba(0,0,0,.62),0 0 30px rgba(0,102,255,.12);backdrop-filter:blur(26px);transform-origin:top right;animation:notification-pop-in .17s ease-out}
+.notification-card:before{content:"";position:absolute;right:22px;top:-6px;width:10px;height:10px;transform:rotate(45deg);background:#0b1420;border-left:1px solid rgba(0,207,255,.23);border-top:1px solid rgba(0,207,255,.23)}
+.notification-card-head{position:relative}
+@keyframes notification-pop-in{from{opacity:0;transform:translateY(-5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:700px){.notification-card{right:-48px;width:min(360px,calc(100vw - 24px));padding:14px}.notification-card:before{right:57px}}
+@media(max-width:420px){.notification-card{right:-45px;width:calc(100vw - 24px)}.notification-card-head h2{font-size:15px}.notification-item p{font-size:10px}}
