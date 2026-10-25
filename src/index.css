@@ -770,3 +770,6 @@ html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
 .sandbox-info-card strong{display:block;font-size:11px;color:#d9e7f6}
 .sandbox-info-card p{margin:6px 0 0;color:#8295ab;font-size:10px;line-height:1.7}
 @media(max-width:650px){.sandbox-hero{align-items:flex-start;padding:16px;gap:11px}.sandbox-hero-mark{width:39px;height:39px}.sandbox-hero-copy h2{font-size:20px}.sandbox-save-indicator{font-size:8px}.sandbox-editor-toolbar{align-items:flex-start}.sandbox-editor-actions{width:100%}.sandbox-editor-actions button{flex:1;justify-content:center}.sandbox-editor-body{grid-template-columns:33px minmax(0,1fr);min-height:300px}.sandbox-editor-body textarea{padding:14px 12px;font-size:11px;min-height:300px}.sandbox-line-numbers{padding-top:14px;font-size:10px}.sandbox-bottom-grid{grid-template-columns:1fr}}
+
+
+.panel-loading{display:flex;align-items:center;justify-content:center;gap:10px;min-height:220px;padding:24px;border:1px solid rgba(220,230,242,.09);border-radius:12px;background:rgba(7,12,19,.72);color:#91a7bf;font:11px "DM Mono",monospace;letter-spacing:.03em}.panel-loading .status-dot{flex-shrink:0}
