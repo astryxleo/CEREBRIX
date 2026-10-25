@@ -390,3 +390,68 @@ html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
 @keyframes notification-pop-in{from{opacity:0;transform:translateY(-5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:700px){.notification-card{right:-48px;width:min(360px,calc(100vw - 24px));padding:14px}.notification-card:before{right:57px}}
 @media(max-width:420px){.notification-card{right:-45px;width:calc(100vw - 24px)}.notification-card-head h2{font-size:15px}.notification-item p{font-size:10px}}
+
+
+/* Notification popover clarity + responsive overflow fixes */
+.notification-card{
+  color:#edf5ff !important;
+  background:#080d15 !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+  border:1px solid rgba(91,205,255,.42) !important;
+  box-shadow:0 22px 64px rgba(0,0,0,.82),0 0 0 1px rgba(0,0,0,.55),0 0 24px rgba(0,143,255,.12) !important;
+  max-height:min(70vh,520px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#294660 #080d15;
+}
+.notification-card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding-bottom:13px;
+  margin-bottom:2px;
+  border-bottom:1px solid rgba(160,190,220,.15);
+}
+.notification-card-head>div{min-width:0}
+.notification-card-head h2{color:#f4f8ff;font-size:18px;line-height:1.25}
+.notification-card-head .icon-btn{
+  flex:0 0 34px;
+  color:#c8d7e8;
+  background:#111c2a;
+  border:1px solid rgba(170,200,230,.18);
+}
+.notification-card-head .icon-btn:hover{
+  color:#fff;background:#1b2b3e;border-color:rgba(91,205,255,.45);
+}
+.notification-item{
+  gap:12px;
+  padding:16px 2px;
+  border-bottom:1px solid rgba(160,190,220,.13);
+}
+.notification-item strong{display:block;color:#f1f6fd;font-size:12px;line-height:1.5}
+.notification-item p{color:#bdc9d8;font-size:11px;line-height:1.7;margin:6px 0 9px;overflow-wrap:anywhere}
+.notification-item small{color:#82a0bc;font-size:9px}
+.notification-item-icon{flex:0 0 36px;width:36px;height:36px}
+.notification-item-icon.cyan{color:#6fe7ff}
+.notification-anchor{z-index:130}
+.notification-btn.notification-open{background:#10253a;border-color:rgba(91,205,255,.42);color:#8fe9ff}
+@media(max-width:700px){
+  .notification-card{
+    position:fixed;
+    top:68px;
+    right:12px;
+    left:auto;
+    width:min(370px,calc(100vw - 24px));
+    max-height:calc(100dvh - 88px);
+    padding:16px;
+    transform-origin:top right;
+  }
+  .notification-card:before{display:none}
+}
+@media(max-width:420px){
+  .notification-card{top:64px;right:10px;width:calc(100vw - 20px);padding:14px}
+  .notification-item p{font-size:11px}
+}
