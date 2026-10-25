@@ -37,7 +37,7 @@ const kinds = [
   { value: "Theory", label: "Theory", hint: "Conceptual explanations and written answers" },
 ];
 
-type Props = { onClose: () => void; onSave: (test: BuilderTest) => void };
+type Props = { onClose: () => void; onSave: (test: BuilderTest) => Promise<boolean | void> | boolean | void };
 const makeQuestion = (id: number): BuilderQuestion => ({ id, kind: "Python", title: "", prompt: "", marks: 5, referenceAnswer: "", dataset: "", options: ["", "", "", ""] });
 
 export default function TestBuilder({ onClose, onSave }: Props) {
@@ -51,11 +51,12 @@ export default function TestBuilder({ onClose, onSave }: Props) {
   const [instructions, setInstructions] = useState("Read each question carefully. Save your work before submitting.");
   const [questions, setQuestions] = useState<BuilderQuestion[]>([makeQuestion(1)]);
   const [publish, setPublish] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const totalMarks = useMemo(() => questions.reduce((sum, q) => sum + Math.max(0, Number(q.marks) || 0), 0), [questions]);
   const patchQuestion = (id: number, patch: Partial<BuilderQuestion>) => setQuestions(current => current.map(q => q.id === id ? { ...q, ...patch } : q));
   const addQuestion = () => setQuestions(current => [...current, makeQuestion(Math.max(0, ...current.map(q => q.id)) + 1)]);
-  const save = (shouldPublish: boolean) => {
+  const save = async (shouldPublish: boolean) => {
     if (!name.trim()) { setError("Give this assessment a name first."); setStep("details"); return; }
     if (!questions.length || questions.some(q => !q.prompt.trim())) { setError("Add the question prompt for every question before saving."); setStep("questions"); return; }
     if (shouldPublish && !scheduledAt) { setError("Choose a start date and time before scheduling this test."); setStep("details"); return; }
@@ -63,13 +64,22 @@ export default function TestBuilder({ onClose, onSave }: Props) {
     if (shouldPublish && deadline && scheduledAt && new Date(deadline).getTime() <= new Date(scheduledAt).getTime()) { setError("The closing time must be later than the opening time."); setStep("details"); return; }
     if (shouldPublish && deadline && new Date(deadline).getTime() <= Date.now()) { setError("Choose a future closing date and time."); setStep("details"); return; }
     const date = scheduledAt ? new Date(scheduledAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "Draft · Not scheduled";
-    onSave({
-      name: name.trim(), subject,
-      status: shouldPublish ? "Scheduled" : "Draft", date, students: "0 enrolled", progress: 0,
-      accent: subject === "MySQL" ? "cyan" : "blue",
-      totalMarks, negativeMarking, duration, scheduledAt, deadline, instructions, questionCount: questions.length, questions,
-    });
-    onClose();
+    setSaving(true);
+    setError("");
+    try {
+      const saved = await onSave({
+        name: name.trim(), subject,
+        status: shouldPublish ? "Scheduled" : "Draft", date, students: "0 enrolled", progress: 0,
+        accent: subject === "MySQL" ? "cyan" : "blue",
+        totalMarks, negativeMarking, duration, scheduledAt, deadline, instructions, questionCount: questions.length, questions,
+      });
+      if (saved === false) return;
+      onClose();
+    } catch {
+      setError("The assessment could not be saved. Your draft is still open; please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return <div className="modal-backdrop builder-backdrop" onClick={onClose}>
@@ -77,7 +87,7 @@ export default function TestBuilder({ onClose, onSave }: Props) {
       <header className="builder-header">
         <div className="builder-brand-icon"><FileCode2 size={20}/></div>
         <div className="builder-heading"><span className="panel-kicker">CEREBRIX / ASSESSMENT STUDIO</span><h2 id="builder-title">Test Builder</h2><p>Build a structured programming assessment, question by question.</p></div>
-        <button className="icon-btn" onClick={onClose} aria-label="Close builder"><X size={19}/></button>
+        <button className="icon-btn" onClick={onClose} aria-label="Close builder" disabled={saving}><X size={19}/></button>
       </header>
       <div className="builder-stepbar">
         <button className={step === "details" ? "current" : "complete"} onClick={() => setStep("details")}><span>01</span> Test setup</button>
@@ -107,7 +117,7 @@ export default function TestBuilder({ onClose, onSave }: Props) {
           <div className="builder-total"><span>Total assessment marks</span><strong>{totalMarks} <small>marks</small></strong></div>
         </div>}
       </div>
-      <footer className="builder-footer"><div className="builder-footer-meta"><span><span className="status-dot"/>{publish ? "Ready to schedule" : "Changes stay in this session"}</span><strong>{totalMarks} marks <i/> {duration} min</strong></div><div className="builder-footer-actions"><button className="secondary-btn" onClick={onClose}>Cancel</button>{step === "details" ? <button className="primary-btn" onClick={() => { setError(""); setStep("questions"); }}>Continue to questions <ChevronDown size={15}/></button> : <><button className="secondary-btn save-draft-btn" onClick={() => save(false)}><Save size={15}/> Save draft</button><button className="primary-btn" onClick={() => { setPublish(true); save(true); }}><CalendarDays size={15}/> Schedule test</button></>}</div></footer>
+      <footer className="builder-footer"><div className="builder-footer-meta"><span><span className="status-dot"/>{publish ? "Ready to schedule" : "Changes stay in this session"}</span><strong>{totalMarks} marks <i/> {duration} min</strong></div><div className="builder-footer-actions"><button className="secondary-btn" onClick={onClose} disabled={saving}>Cancel</button>{step === "details" ? <button className="primary-btn" onClick={() => { setError(""); setStep("questions"); }}>Continue to questions <ChevronDown size={15}/></button> : <><button className="secondary-btn save-draft-btn" onClick={() => void save(false)} disabled={saving}><Save size={15}/> {saving ? "Saving…" : "Save draft"}</button><button className="primary-btn" onClick={() => { setPublish(true); void save(true); }} disabled={saving}><CalendarDays size={15}/> {saving ? "Saving…" : "Schedule test"}</button></>}</div></footer>
     </section>
   </div>;
 }
