@@ -29,7 +29,7 @@ export default function TestDetails({ test, onClose, onDelete }: Props) {
           <div className="details-question-copy"><strong>{question.title.trim() || `Question ${index + 1}`}</strong><span>{question.kind} · {question.marks} marks</span><p>{question.prompt}</p>{question.dataset && <small>Starter dataset included</small>}</div>
         </article>) : <p className="details-demo-note">This is a sample assessment in the dashboard preview. Its questions are not stored in this browser.</p>}
       </div>
-      <footer className="details-footer"><span>Saved in this browser on this device</span><div><button className="secondary-btn" onClick={onClose}>Close</button><button className="danger-btn" onClick={() => onDelete(test)}><Trash2 size={15}/> Delete test</button></div></footer>
+      <footer className="details-footer"><span>{test.id ? "Saved in the shared workspace" : "Sample assessment preview"}</span><div><button className="secondary-btn" onClick={onClose}>Close</button><button className="danger-btn" onClick={() => onDelete(test)}><Trash2 size={15}/> Delete test</button></div></footer>
     </section>
   </div>;
 }
