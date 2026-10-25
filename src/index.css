@@ -455,3 +455,50 @@ html.cerebrix-force-cursor .cerebrix-cursor { display: none !important; }
   .notification-card{top:64px;right:10px;width:calc(100vw - 20px);padding:14px}
   .notification-item p{font-size:11px}
 }
+
+
+/* Final stacking-context correction: keep the inbox above every dashboard panel */
+.topbar{
+  position:relative !important;
+  z-index:1000 !important;
+  overflow:visible !important;
+  isolation:isolate;
+  background:#05080e !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+.main{position:relative;z-index:0}
+.top-actions{position:relative;z-index:1001;overflow:visible}
+.notification-anchor{position:relative;z-index:1002}
+.notification-card{
+  z-index:2147483000 !important;
+  opacity:1 !important;
+  color:#f2f7ff !important;
+  background:#070b12 !important;
+  border:1px solid #34769b !important;
+  outline:1px solid rgba(0,0,0,.8);
+  box-shadow:0 26px 80px rgba(0,0,0,.95),0 0 0 2px rgba(3,8,15,.95),0 0 32px rgba(0,153,255,.18) !important;
+  filter:none !important;
+}
+.notification-card .panel-kicker{color:#75dcff !important}
+.notification-card-head h2{color:#fff !important}
+.notification-item strong{color:#fff !important}
+.notification-item p{color:#d3deeb !important}
+.notification-item small{color:#9dbbd5 !important}
+.notification-card:before{z-index:1}
+@media(max-width:700px){
+  .topbar{
+    z-index:1000 !important;
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+  .notification-card{
+    position:fixed !important;
+    z-index:2147483000 !important;
+    top:72px !important;
+    right:12px !important;
+    left:auto !important;
+    width:min(370px,calc(100vw - 24px)) !important;
+    max-height:calc(100dvh - 88px) !important;
+  }
+}
