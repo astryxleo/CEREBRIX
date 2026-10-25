@@ -54,6 +54,17 @@ export function SupportTicketForm({ user, profile, onClose }: {
   }, [user.id]);
 
   useEffect(() => { void loadOwnTickets(); }, [loadOwnTickets]);
+
+  // Keep the requester’s support history in sync when the administrator replies or changes status.
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase.channel(`cerebrix-support-requester-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_tickets", filter: `requester_id=eq.${user.id}` }, () => {
+        void loadOwnTickets();
+      })
+      .subscribe();
+    return () => { void supabase!.removeChannel(channel); };
+  }, [user.id, loadOwnTickets]);
   const onChooseFiles = (event: ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(event.target.files ?? []);
     const combined = [...files, ...selected];
