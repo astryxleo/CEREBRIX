@@ -37,6 +37,38 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
  const [profileMenuOpen,setProfileMenuOpen]=useState(false);
  const [query,setQuery]=useState("");
  const [notice,setNotice]=useState("");
+ const [notifications,setNotifications]=useState<Array<{id:string;title:string;message:string;kind:string;created_at:string;read_at:string|null}>>([]);
+ const unreadNotifications=notifications.filter(item=>!item.read_at).length;
+ useEffect(()=>{
+  if(!supabase)return;
+  let alive=true;
+  const loadNotifications=async()=>{
+   const {data,error}=await supabase!.from("notifications").select("id,title,message,kind,created_at,read_at").eq("recipient_id",user.id).order("created_at",{ascending:false}).limit(50);
+   if(!alive)return;
+   if(!error)setNotifications((data??[]) as typeof notifications);
+  };
+  void loadNotifications();
+  const channel=supabase!.channel("cerebrix-notifications-"+user.id)
+   .on("postgres_changes",{event:"*",schema:"public",table:"notifications",filter:"recipient_id=eq."+user.id},()=>{void loadNotifications();})
+   .subscribe();
+  return()=>{alive=false;void supabase!.removeChannel(channel);};
+ },[user.id]);
+ const openNotification=async(item:{id:string;read_at:string|null})=>{
+  if(!item.read_at&&supabase){
+   const readAt=new Date().toISOString();
+   setNotifications(current=>current.map(n=>n.id===item.id?{...n,read_at:readAt}:n));
+   const {error}=await supabase.from("notifications").update({read_at:readAt}).eq("id",item.id).eq("recipient_id",user.id);
+   if(error)setNotifications(current=>current.map(n=>n.id===item.id?{...n,read_at:null}:n));
+  }
+ };
+ const markAllNotificationsRead=async()=>{
+  const unread=notifications.filter(item=>!item.read_at);
+  if(!unread.length||!supabase)return;
+  const readAt=new Date().toISOString();
+  setNotifications(current=>current.map(item=>item.read_at?item:{...item,read_at:readAt}));
+  const {error}=await supabase.from("notifications").update({read_at:readAt}).eq("recipient_id",user.id).is("read_at",null);
+  if(error)setNotifications(current=>current.map(item=>unread.some(n=>n.id===item.id)?{...item,read_at:null}:item));
+ };
  useEffect(()=>{
   if(notice!=="__notifications__")return;
   const closeOnEscape=(event:KeyboardEvent)=>{if(event.key==="Escape")setNotice("");};
@@ -120,7 +152,7 @@ function App({ user, profile, signOut }: { user: { id: string; email?: string };
   </aside>
   {mobileNav&&<button className="scrim" onClick={()=>setMobileNav(false)} aria-label="Close navigation"/>}
   <main className="main">
-   <header className="topbar"><div className="top-left"><button className="icon-btn menu-btn" onClick={()=>setMobileNav(true)} aria-label="Open menu"><Menu size={19}/></button><div className="breadcrumb">Workspace <span>/</span> <b>{active}</b></div></div><div className="top-actions"><div className="status-pill"><span className="status-dot"/> All systems normal</div><button className="icon-btn help-btn" onClick={()=>setNotice("Help centre is coming soon.")} aria-label="Help"><CircleHelp size={18}/></button><div className="notification-anchor"><button className={`icon-btn notification-btn ${notice==="__notifications__"?"notification-open":""}`} onClick={()=>setNotice(current=>current==="__notifications__"?"":"__notifications__")} aria-label="Notifications" aria-expanded={notice==="__notifications__"} aria-haspopup="dialog"><Bell size={18}/><i/></button>{notice==="__notifications__"&&<div className="notification-card" role="dialog" aria-label="Notifications"><div className="notification-card-head"><div><span className="panel-kicker">CEREBRIX / INBOX</span><h2>Notifications<span className="heading-period">.</span></h2></div><button className="icon-btn" onClick={()=>setNotice("")} aria-label="Close notifications"><X size={16}/></button></div><article className="notification-item"><span className="notification-item-icon"><Bell size={16}/></span><div><strong>{role==="Teacher"?"Workspace updates":"Assessment updates"}</strong><p>{role==="Teacher"?"Student accounts and class roster are managed from the Students tab. New submissions appear in Submissions.":"Your teacher-issued account is active. Published assessments will appear in My exams."}</p><small>WORKSPACE NOTICE</small></div></article><article className="notification-item"><span className="notification-item-icon cyan"><ShieldCheck size={16}/></span><div><strong>Security is enabled</strong><p>Use only the account credentials issued to you. Never share your password publicly.</p><small>ACCOUNT SECURITY</small></div></article></div>}</div><div className="top-user"><div className="top-avatar">{(profile.display_name || user.email || "C").slice(0,1).toUpperCase()}</div><div className="top-user-copy"><strong>{profile.display_name || (role === "Teacher" ? "Teacher" : "Student")}</strong><span>{role} workspace</span></div></div></div></header>
+   <header className="topbar"><div className="top-left"><button className="icon-btn menu-btn" onClick={()=>setMobileNav(true)} aria-label="Open menu"><Menu size={19}/></button><div className="breadcrumb">Workspace <span>/</span> <b>{active}</b></div></div><div className="top-actions"><div className="status-pill"><span className="status-dot"/> All systems normal</div><button className="icon-btn help-btn" onClick={()=>setNotice("Help centre is coming soon.")} aria-label="Help"><CircleHelp size={18}/></button><div className="notification-anchor"><button className={`icon-btn notification-btn ${notice==="__notifications__"?"notification-open":""}`} onClick={()=>setNotice(current=>current==="__notifications__"?"":"__notifications__")} aria-label="Notifications" aria-expanded={notice==="__notifications__"} aria-haspopup="dialog"><Bell size={18}/><i/></button>{notice==="__notifications__"&&<div className="notification-card" role="dialog" aria-label="Notifications"><div className="notification-card-head"><div><span className="panel-kicker">CEREBRIX / INBOX</span><h2>Notifications<span className="heading-period">.</span></h2><p className="notification-count">{unreadNotifications} unread · latest 50</p></div><div className="notification-head-actions">{unreadNotifications>0&&<button className="notification-mark-all" onClick={()=>void markAllNotificationsRead()}>Mark all read</button>}<button className="icon-btn" onClick={()=>setNotice("")} aria-label="Close notifications"><X size={16}/></button></div></div><div className="notification-scroll" role="list">{notifications.length===0?<div className="notification-empty"><Bell size={22}/><strong>You're all caught up</strong><p>{role==="Teacher"?"Student submissions will appear here as soon as they are submitted.":"Your teacher's grading updates will appear here when feedback is saved."}</p></div>:notifications.map(item=><button type="button" role="listitem" key={item.id} className={"notification-item notification-live-item "+(!item.read_at?"unread":"")} onClick={()=>void openNotification(item)}><span className={"notification-item-icon "+(item.kind==="grade_published"?"cyan":"")}><Bell size={16}/></span><span className="notification-item-copy"><strong>{item.title}</strong><p>{item.message}</p><small>{new Date(item.created_at).toLocaleString()} · {item.kind==="submission_received"?"NEW SUBMISSION":item.kind==="grade_published"?"GRADE & FEEDBACK":"WORKSPACE UPDATE"}</small></span>{!item.read_at&&<i className="notification-unread-dot" aria-label="Unread"/>}</button>)}</div></div>}</div><div className="top-user"><div className="top-avatar">{(profile.display_name || user.email || "C").slice(0,1).toUpperCase()}</div><div className="top-user-copy"><strong>{profile.display_name || (role === "Teacher" ? "Teacher" : "Student")}</strong><span>{role} workspace</span></div></div></div></header>
    <motion.div className="page" key={location.pathname} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:.24,ease:"easeOut"}}>
     {active !== "Overview" && <div className="welcome-row"><div className="welcome-copy"><div className="eyebrow"><span className="eyebrow-line"/> {role === "Teacher" ? "ASSESSMENT COMMAND CENTER" : "YOUR LEARNING COMMAND CENTER"}</div><h1>{active}<span className="heading-period">.</span></h1><p className="page-sub">{active==="Tests"?"Create, schedule, and manage programming assessments.":active==="Submissions"?"Review student work and keep grading moving.":active==="Students"?"Create student logins, manage your class roster, and track participation.":active==="Leaderboard"?"See student rankings, graded scores, and learning progress.":active==="My analytics"?"Explore your scores, progress, and teacher feedback.":"Understand class performance at a glance."}</p></div><div className="welcome-actions">{role === "Teacher" && <button className="primary-btn" onClick={goToBuilder}><Plus size={17}/> Create test</button>}</div></div>}
      {notice&&notice!=="__notifications__"&&<div className="notice"><Sparkles size={16}/><span>{notice}</span><button onClick={()=>setNotice("")} aria-label="Dismiss"><X size={15}/></button></div>}
